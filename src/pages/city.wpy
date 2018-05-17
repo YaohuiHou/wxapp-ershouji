@@ -1,0 +1,288 @@
+<template>
+  <view class="city">
+   <scroll-view scroll-y  scroll-into-view="{{navInfo}}" scroll-with-animation="{{scrollAnimation}}" class="content" enable-back-to-top="true">
+      <view  class="li">
+        <text class="em">当前定位城市</text>
+        <text class="span location">{{city.name}}</text>
+      </view>
+      <block wx:for="{{content}}" wx:key="{{index}}">
+        <view  class="li" id="{{index}}">
+          <text class="em">{{index}}</text>
+          <view class="cities">
+            <text class="span" @tap="cityChange({{item}})" wx:for="{{item}}" wx:key="{{index}}">{{item.name}}</text>            
+          </view>
+        </view>
+      </block>
+    </scroll-view>
+    <!-- 选中的弹窗样式 -->
+    <view class="scale" hidden="{{navInfoShow}}">{{navArr[navIndex]}}</view>
+    <!-- 字母导航 -->
+    <view class="nav" @touchmove="indexNavMove" @touchend="indexNavEnd">
+      <view 
+        class="{{[ navArr[index] === navInfo ? 'text selected' : 'text']}}"
+        @tap="indexNav({{index}})" id="{{navArr[index]}}"
+        wx:for="{{navArr}}"
+        wx:key="navArr"
+        data-number="{{index}}"
+      >{{item}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import mixin from '../mixins'
+export default class Index extends wepy.page {
+  config = {
+    navigationBarTitleText: '选择城市',
+    backgroundColorTop: '#ffffff',
+    enablePullDownRefresh: false
+  }
+  data = {
+    navArr: [],
+    navInfo: '',
+    navIndex: 0,
+    navInfoShow: true,
+    scrollAnimation: true,
+    city: {},
+    content: {},
+    // 请求得到城市列表
+    cityList: []
+  }
+  mixins = [mixin]
+  async onLoad() {
+    wx.showLoading({
+      title: '玩命加载中...'
+    })
+    this.$nextTick(() => {
+      setTimeout(() => {
+        wx.hideLoading()
+      }, 1e3)
+    })
+
+    // 获取城市列表
+    wx.getStorage({
+      key: 'citiesList',
+      complete: async res => {
+        if (!res.data) {
+          await this.getCityList() // 获取城市
+        } else {
+          let data = JSON.parse(res.data)
+          this.content = data
+          // 序列
+          this.navArr = Object.keys(data).sort()
+          this.$apply()
+        }
+      }
+    })
+
+    // 获取城市定位信息
+    wx.getStorage({
+      key: 'cityObj',
+      success: res => {
+        let data = JSON.parse(res.data)
+        this.city = data
+        this.$apply()
+      }
+    })
+  }
+  onShow() {}
+  methods = {
+    async cityChange(item) {
+      // 替换选中城市
+      await wx.setStorage({
+        key: 'cityObj',
+        data: JSON.stringify(item)
+      })
+
+      // 返回
+      await wx.reLaunch({
+        url: 'index'
+      })
+    },
+    //导航栏
+    indexNavmove(e) {
+      let num = e.target.dataset.number
+      let top = e.target.offsetTop
+      let index = this.navArr[
+        Math.floor(
+          (e.changedTouches[0].pageY - e.currentTarget.offsetTop) / (top / num)
+        )
+      ]
+
+      if (index === this.navIndex) {
+        return
+      } else {
+        this.navIndex = index
+        this.navInfo = this.navArr[index]
+        this.navInfoShow = false
+      }
+      this.$apply()
+    },
+    indexNavEnd(e) {
+      let time = setTimeout(() => {
+        this.navInfoShow = true
+        this.$apply()
+        clearTimeout(time)
+      }, 1000)
+    },
+    // 导航点击
+    indexNav(index) {
+      this.scrollAnimation = true
+      this.navIndex = index
+      this.navInfo = this.navArr[index]
+      this.navInfoShow = false
+
+      let time = setTimeout(() => {
+        this.navInfoShow = true
+        this.$apply()
+        clearTimeout(time)
+      }, 1000)
+    }
+  }
+
+  // 获取城市列表
+  getCityList() {
+    wepy
+      .request({
+        url: `${this.host}wx/getProvinceCityList?callback=1`
+      })
+      .then(res => {
+        let city = JSON.parse(res.data.substring(2, res.data.length - 1))
+        if (city.ret == 0) {
+          this.cityList = city.result
+          this.cityListFun()
+        }
+      })
+  }
+
+  // 获取城市列表 + 排序
+  cityListFun() {
+    let arr = {}
+    this.cityList.forEach(ele => {
+      let enStart = ele.enName.slice(0, 1).toUpperCase()
+      if (!arr[enStart]) {
+        arr[enStart] = []
+      }
+      arr[enStart].push(ele)
+    })
+    // key排序
+    let sortObj = {}
+    let sortedObjKeys = Object.keys(arr).sort()
+    sortedObjKeys.forEach(e => {
+      sortObj[e] = arr[e]
+    })
+    this.content = sortObj
+    // 序列
+    this.navArr = Object.keys(sortObj).sort()
+    this.$apply()
+    wx.setStorage({
+      key: 'citiesList',
+      data: JSON.stringify(sortObj)
+    })
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.city {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 100;
+  background-color: #fff;
+}
+.nav {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.nav .text {
+  display: block;
+  height: 44rpx;
+  line-height: 36rpx;
+  text-align: center;
+  padding: 0 10px;
+  font-size: 22rpx;
+  color: #353535;
+}
+.nav .text.selected {
+  color: #1571e5;
+}
+.scale {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 160rpx;
+  height: 160rpx;
+  line-height: 160rpx;
+  margin: -80rpx 0 0 -80rpx;
+  text-align: center;
+  font-size: 100rpx;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 12;
+  -webkit-transition: opacity 0.2s ease-out;
+  transition: opacity 0.2s ease-out;
+  border-radius: 32rpx;
+}
+.content {
+  list-style: none;
+  position: relative;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
+  height: 100vh;
+}
+.content .li {
+  background: #fff;
+}
+.content .li .em,
+.content .li .span {
+  color: #353535;
+  padding: 0 40rpx;
+}
+.content .li .em {
+  background: #efeff4;
+  line-height: 68rpx;
+  display: block;
+  font-size: 30rpx;
+}
+.cities {
+  background: #fff;
+  padding: 22rpx 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.content .li .span {
+  display: block;
+  padding: 0 20rpx;
+  line-height: 62rpx;
+  margin: 0 15rpx 6rpx;
+  font-size: 35rpx;
+  text-align: center;
+}
+.content .li .location {
+  height: 100rpx;
+  line-height: 100rpx;
+  text-align: left;
+  font-size: 34rpx;
+  color: #486cdc;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 0;
+  &:before {
+    content: '\e7c4';
+    font-family: 'TieJia';
+    display: block;
+    width: 20rpx;
+    height: 30rpx;
+    font-size: 30rpx;
+    line-height: 30rpx;
+    color: #486cdc;
+    margin-right: 15rpx;
+  }
+}
+</style>

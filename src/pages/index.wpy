@@ -1,0 +1,419 @@
+<template>
+  <view class="home">
+    <!-- head -->
+    <block>
+      <screenHeader class="header"
+        :chooseShow.sync="chooseShow"
+        :typeMode.sync="typeMode"
+        :brandShow.sync="brandShow"
+        :sortShow.sync="sortShow"
+        :address.sync="address"
+      ></screenHeader>
+    </block>
+    <scroll-view class="content" scroll-y bindscrolltolower="homeList" enable-back-to-top="true">
+      <!-- 筛选 -->
+      <selectView
+        :typeMode.sync="typeMode"
+        :brandShow.sync="brandShow"
+        :newSelect.sync="newSelect"
+        :startArr.sync="startArr"
+        :submitData.sync="submitData"
+      ></selectView>
+      <!-- 列表 -->
+      <repeat for="{{pageList}}" key="index" index="index" item="item">
+        <listItem :item="item"></listItem>
+      </repeat>
+      <text class="loading">{{loadingMsg}}</text>
+    </scroll-view>
+    <view class="footer">
+      <text class="pay" data-id="0" @tap="telToast(0)">买设备</text>
+      <text class="sell" data-id="1" @tap="telToast(1)">卖设备</text>
+    </view>
+    <!-- 电话弹窗 -->
+    <toastView
+      :toastShow.sync="toastShow"
+      :toastContent.sync="toastContent"
+    ></toastView>
+    <!-- 筛选弹窗 -->
+    <chooseToast
+      :chooseShow.sync="chooseShow"
+      :newSelect.sync="newSelect"
+      :submitData.sync="submitData"
+    ></chooseToast>
+    <!-- 机型 -->
+    <typeModeBox
+      :typeMode.sync="typeMode"
+      :submitData.sync="submitData"
+      :typeModeData.sync="typeModeData"
+    ></typeModeBox>
+    <!-- 品牌 -->
+    <brand
+      :brandShow.sync="brandShow"
+      :submitData.sync="submitData"
+      :brandData.sync="brandData"
+    ></brand>
+    <!-- 排序 -->
+    <sortView
+      :sortShow.sync="sortShow"
+      :submitData.sync="submitData"
+    ></sortView>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import mixins from '../mixins'
+import toastView from '../components/toast'
+import listItem from '../components/item'
+import screenHeader from '../components/screen'
+import selectView from '../components/selected'
+import chooseToast from '../components/chooseToast'
+import typeModeBox from '../components/typeModeBox'
+import brand from '../components/brand'
+import sortView from '../components/sort'
+
+export default class Index extends wepy.page {
+  config = {
+    navigationBarTitleText: '铁甲二手机'
+  }
+  components = {
+    toastView,
+    listItem,
+    screenHeader,
+    selectView,
+    chooseToast,
+    typeModeBox,
+    brand,
+    sortView
+  }
+
+  mixins = [mixins]
+
+  data = {
+    // 弹窗是否隐藏
+    toastShow: true,
+    animationToast: {},
+    toastContent: {
+      // 提示文案
+      toastHeader: '我要买设备',
+      // 按钮文案
+      toastButton: '免费通话',
+      // 文案
+      toastContent: '请填写手机号，稍后铁甲管家会与您联系！'
+    },
+    // 选中类型
+    newSelect: {},
+    // 选中固定参数
+    startArr: [
+      { type: 'eqSourceId', name: '自营', id: 1, select: false },
+      { name: '不对版赔付', id: 2, select: false },
+      { type: 'managerRecommend', name: '管家推荐', id: 1, select: false }
+    ],
+    // 筛选弹窗
+    chooseShow: false,
+    // 机型
+    typeMode: false,
+    typeModeData: {},
+    // 品牌
+    brandShow: false,
+    brandData: {},
+    // 排序
+    sortShow: false,
+    showType: '1',
+    // 选中地址
+    address: {},
+    // 列表信息
+    pageList: [],
+    // loading文案
+    loadingMsg: '正在拼命加载...',
+    // 请求数据
+    submitData: {
+      callback: 1,
+      userId: 0, // 用户id
+      client: 8, //（微信小程序传8）
+      distinctId: '', // 设备标识
+      locationId: '', // 位置信息
+      provinceId: '', // 省id
+      cityId: '', // 城市id
+      showRecommend: 'N', // 是否推荐 Y 展示 N 不展示
+      keyword: '', // 输入的关键词 （不对版赔付）
+      eqSourceId: '', //设备属性id（1自营，2独家，3检测等）
+      categoryId: '', // 机型id
+      secondCategoryId: '', // 二级机型id
+      serialId: '', // 系列id
+      multiSerialId: '', // 多系列id
+      brandId: '', // 品牌id
+      modelId: '', // 型号id
+      priceId: '', // 价格id
+      tonnageId: '', // 吨位id
+      hourId: '', // 小时id
+      yearId: '', // 年份id
+      assureIds: '', // 保障id
+      tonnage: '', //具体吨位值
+      priceReduced: '', //降价急售 1.是 0否
+      hasVideo: '', //有视频 1.是 0否
+      tjInsurance: '', //是有铁甲保 2.是 0否
+      managerRecommend: '', //是有管家推荐 1.是 0否
+      armLengthId: '', //臂架长度
+      pressureId: '', //压力
+      productionId: '', //产量
+      powerId: '', //动力形式
+      distributingId: '', //分配阀
+      emissionStandardsId: '', //排放标准
+      loadingCapacityId: '', //装载容量
+      sortId: 0, //默认排序id （0 默认排序，1，更新时间，2，看车最多，3，价格最低，4，价格最高，5，按小时数最低，6，按小时数最高，8，出产年限）
+      order: 1, // 顺序规则1：升序，2：降序
+      pageIndex: 1, // 页数
+      pageSize: 10, // 每页显示条数
+      randomSort: '', //获取后的数据是否要随机排序
+      adKey: '' //中联重科广告
+    }
+  }
+  watch = {
+    // 筛选类型
+    chooseType(newVal, oldVal) {},
+    // 机型数据
+    typeModeData(newVal, oldVal) {
+      newVal.selectType = 'typeMode'
+      this.newSelect['typeMode'] = newVal
+    },
+    // 品牌数据
+    brandData(newVal, oldVal) {
+      newVal.selectType = 'brandId'
+      this.newSelect['brandId'] = newVal
+    },
+    address(newVal, oldVal) {
+      if (!newVal.level) return
+      if (newVal.level == 2) {
+        this.submitData.provinceId = newVal.id
+        this.submitData.cityId = ''
+      } else {
+        this.submitData.cityId = newVal.id
+        this.submitData.provinceId = ''
+      }
+    },
+    // 提交数据
+    submitData(newVal, oldVal) {
+      if (newVal.pageIndex === oldVal.pageIndex) {
+        this.submitData.pageIndex = 1
+        this.homeDataDisable = false
+        this.pageList = []
+        // 列表请求
+        this.getPageHomeList()
+      }
+    }
+  }
+  methods = {
+    // 电话弹窗
+    telToast(id) {
+      switch (id) {
+        case '0':
+          // 买设备
+          this.toastContent.toastHeader = '我要买设备'
+          this.toastContent.toastButton = '免费通话'
+          this.toastContent.toastContent =
+            '请填写手机号，稍后铁甲客服会与您联系！'
+          break
+        case '1':
+          // 卖设备
+          this.toastContent.toastHeader = '我要卖设备'
+          this.toastContent.toastButton = '提交'
+          this.toastContent.toastContent =
+            '请填写手机号，稍后铁甲管家会与您联系！'
+          break
+      }
+      this.toastShow = false
+    },
+    // 列表加载
+    homeList() {
+      if (this.homeDataDisable) return
+      this.homeDataDisable = true
+      this.submitData.pageIndex += 1
+      this.getPageHomeList()
+    }
+  }
+
+  events = {}
+
+  onShareAppMessage(res) {
+    // 分享
+    if (res.from === 'button') {
+    }
+    return {
+      title: '铁甲二手机分享文案，文案待定',
+      path: `/pages/index`,
+      imageUrl: '',
+      success: async res => {},
+      fail: res => {
+        // 转发失败
+      }
+    }
+  }
+  onLoad() {
+    // 获取缓存定位地址
+    this.getPostionInfo()
+
+    wx.showLoading({
+      title: '数据加载中...'
+    })
+    wx.removeStorage({
+      key: 'screenVal'
+    })
+
+    setTimeout(() => {
+      wx.hideLoading()
+    }, 3e3)
+  }
+  onShow() {
+    // 搜索信息
+    wx.getStorage({
+      key: 'screenVal',
+      success: res => {
+        if (res.data) {
+          this.submitData.keyword = res.data
+          if (res.data != this.startArr[1].name) {
+            this.newSelect.keyword = {
+              name: res.data,
+              type: 'keyword'
+            }
+          } else {
+            this.startArr[1].select = true
+          }
+          this.$apply()
+        }
+      }
+    })
+  }
+
+  // 首页列表
+  getPageHomeList() {
+    console.log(this.submitData, '提交内容')
+    wepy
+      .request({
+        url: `${this.host}wx/getEqAndSearchList`,
+        data: this.submitData
+      })
+      .then(res => {
+        let data = JSON.parse(res.data.substring(2, res.data.length - 1))
+        if (data.ret == 0) {
+          this.pageList = [...this.pageList, ...data.result.items]
+          // 总页数
+          this.listTotal = Math.ceil(
+            data.result.total / this.submitData.pageSize
+          )
+
+          if (this.submitData.pageIndex >= this.listTotal) {
+            this.homeDataDisable = true
+            this.loadingMsg = '哎呦喂，已经见底了。'
+          } else {
+            this.homeDataDisable = false
+          }
+
+          wx.hideLoading()
+        }
+        this.$apply()
+      })
+  }
+
+  // 获取缓存定位地址
+  async getPostionInfo() {
+    await wx.getStorage({
+      key: 'cityObj',
+      success: res => {
+        console.log(res, '对的')
+        if (!res.data) {
+          // 定位
+          this.cityChange()
+        } else {
+          this.address = JSON.parse(res.data)
+          this.$apply()
+        }
+      },
+      fail: res => {
+        console.log(res, '错的')
+
+        this.cityChange()
+      }
+    })
+  }
+
+  // 定位城市存储
+  cityChange() {
+    // 设置缓存
+    wepy
+      .request({
+        url: `${this.host}getAreaByIP?callback=1`
+      })
+      .then(res => {
+        let data = JSON.parse(res.data.substring(2, res.data.length - 1))
+        if (data.ret == 0) {
+          this.address = {
+            name: data.result.provinceName,
+            id: data.result.provinceId,
+            level: 2
+          }
+          this.$apply()
+          wx.setStorage({
+            key: 'cityObj',
+            data: JSON.stringify(this.address)
+          })
+        }
+      })
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.home {
+  position: relative;
+  height: 100vh;
+  box-sizing: border-box;
+  padding: 168rpx 0 100rpx;
+  overflow: hidden;
+  .header {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .content {
+    height: 100%;
+    position: relative;
+    .loading {
+      height: 64rpx;
+      display: block;
+      line-height: 64rpx;
+      text-align: center;
+      font-size: 28rpx;
+      color: #888;
+      background: #efeff4;
+    }
+  }
+  .footer {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100rpx;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    box-sizing: border-box;
+    text {
+      flex: 1;
+      box-sizing: border-box;
+      font-size: 34rpx;
+      text-align: center;
+      line-height: 100rpx;
+      font-weight: 500;
+      color: #fff;
+      &.pay {
+        background-color: #ffb114;
+      }
+      &.sell {
+        background: #fb7530;
+      }
+    }
+  }
+}
+</style>

@@ -1,0 +1,163 @@
+<template>
+  <view class="view" wx:if="{{sortShow}}">
+    <view class="choose">
+      <view class="head">选择排序</view>
+      <scroll-view scroll-y class="scroll-view">
+        <view class="content">
+          <text
+            wx:for="{{sort}}"
+            wx:key="{{index}}"
+            class="{{ item.select ? 'selected' : '' }}"
+            @tap="sortFun({{item.id}})"
+          >{{item.name}}</text>
+        </view>
+      </scroll-view>
+    </view>
+    <view class="mask" @tap="toastMask"></view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import mixin from '../mixins'
+export default class Index extends wepy.component {
+  props = {
+    sortShow: {
+      type: Boolean,
+      default: false,
+      twoWay: true
+    },
+    submitData: {
+      type: Object,
+      twoWay: true
+    }
+  }
+  data = {
+    sort: [
+      { selectType: 'sortId', name: '默认排序', id: 0, select: false },
+      { selectType: 'sortId', name: '按价格从低到高', id: 3, select: false },
+      { selectType: 'sortId', name: '按价格从高到低', id: 4, select: false },
+      { selectType: 'sortId', name: '按小时数从低到高', id: 5, select: false },
+      { selectType: 'sortId', name: '按小时数从高到低', id: 6, select: false },
+      { selectType: 'sortId', name: '按出厂年限', id: 8, select: false },
+      { selectType: 'sortId', name: '按发布时间', id: 1, select: false },
+      { selectType: 'sortId', name: '按看车最多', id: 2, select: false }
+    ]
+  }
+  mixins = [mixin]
+  onShow() {
+    // 获取缓存数据
+    this.sort.forEach((ele, i) => {
+      ele.select = false
+      if (ele.id == id) {
+        ele.select = true
+      }
+    })
+  }
+  methods = {
+    // 关闭
+    toastMask() {
+      this.sortShow = false
+      this.$apply()
+    },
+    // 排序选择
+    sortFun(id) {
+      this.sort.forEach((ele, i) => {
+        ele.select = false
+        if (ele.id == id) {
+          ele.select = true
+        }
+      })
+      // 选中返回
+      this.sortShow = false
+      this.submitData.sortId = id
+      this.$apply()
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.view {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  .mask {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+  .choose {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 590rpx;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    z-index: 1;
+    .head {
+      font-size: 34rpx;
+      color: #353535;
+      height: 86rpx;
+      line-height: 86rpx;
+      text-align: center;
+      font-weight: 500;
+    }
+    .scroll-view {
+      height: calc(~'100vh - 176rpx');
+      .content {
+        background-color: #fff;
+        display: flex;
+        flex-direction: column;
+        padding-left: 30rpx;
+      }
+      .h4 {
+        font-size: 30rpx;
+        color: #353535;
+        background: #efeff4;
+        height: 68rpx;
+        line-height: 68rpx;
+        padding-left: 30rpx;
+        display: block;
+      }
+      text {
+        font-size: 28rpx;
+        color: #353535;
+        height: 100rpx;
+        line-height: 100rpx;
+        border-bottom: 1rpx solid #e5e5e5;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        &.selected {
+          color: #486cdc;
+          &:after {
+            content: '\e607';
+            display: block;
+            margin-right: 56rpx;
+            font-size: 26rpx;
+            line-height: 26rpx;
+            color: #486cdc;
+            font-family: 'TieJia';
+            font-weight: 300;
+          }
+        }
+      }
+    }
+  }
+}
+</style>

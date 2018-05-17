@@ -1,0 +1,13 @@
+{
+  "description": "A WePY project",
+  "setting": {
+    "urlCheck": true,
+    "es6": false,
+    "postcss": false,
+    "minified": false
+  },
+  "compileType": "miniprogram",
+  "appid": "wxd64bc5a059584296",
+  "projectname": "wxstaetapp",
+  "miniprogramRoot": "./dist"
+}

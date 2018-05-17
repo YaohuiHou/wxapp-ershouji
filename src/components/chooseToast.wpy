@@ -1,0 +1,317 @@
+<template>
+  <view class="view" wx:if="{{chooseShow}}">
+    <view class="choose">
+      <view class="head">筛选</view>
+      <scroll-view scroll-y class="scroll-view">
+        <block wx:for="{{type}}" wx:key="{{index}}">
+          <text class="h4">{{item.name}}</text>
+          <view class="content">
+            <!-- <text class="selected">不对版赔付</text> -->
+            <text
+              wx:for="{{item.list}}"
+              wx:key="{{index}}"
+              class="{{item.select ? 'selected' : ''}}"
+              @tap="selectedFun({{item}})"
+            >{{item.name}}</text>
+          </view>
+        </block>
+      </scroll-view>
+      <view class="footer">
+        <text class="reset" @tap="resetFun">重置</text>
+        <text class="submit" @tap="submitFun">确定</text>
+      </view>
+    </view>
+    <view class="mask" @tap="toastMask"></view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import mixin from '../mixins'
+export default class Index extends wepy.component {
+  props = {
+    chooseShow: {
+      type: Boolean,
+      default: false,
+      twoWay: true
+    },
+    newSelect: {
+      twoWay: true
+    }
+  }
+  data = {
+    type: [
+      {
+        name: '价格',
+        list: [
+          {
+            selectType: 'priceId',
+            index: 0,
+            select: false,
+            name: '0-10万',
+            id: '1'
+          },
+          {
+            selectType: 'priceId',
+            index: 0,
+            select: false,
+            name: '10(含)-20万',
+            id: '21'
+          },
+          {
+            selectType: 'priceId',
+            index: 0,
+            select: false,
+            name: '20(含)-30万',
+            id: '22'
+          },
+          {
+            selectType: 'priceId',
+            index: 0,
+            select: false,
+            name: '30(含)-50万',
+            id: '3'
+          },
+          {
+            selectType: 'priceId',
+            index: 0,
+            select: false,
+            name: '50万及以上',
+            id: '41'
+          }
+        ]
+      },
+      {
+        name: '使用小时数',
+        list: [
+          {
+            selectType: 'hourId',
+            index: 1,
+            select: false,
+            name: '2000以内',
+            id: '1'
+          },
+          {
+            selectType: 'hourId',
+            index: 1,
+            select: false,
+            name: '2000(含)-5000',
+            id: '2'
+          },
+          {
+            selectType: 'hourId',
+            index: 1,
+            select: false,
+            name: '5000(含)-8000',
+            id: '3'
+          },
+          {
+            selectType: 'hourId',
+            index: 1,
+            select: false,
+            name: '8000以上',
+            id: '4'
+          }
+        ]
+      },
+      {
+        name: '出厂年限',
+        list: [
+          {
+            selectType: 'yearId',
+            index: 2,
+            select: false,
+            name: '1年以下',
+            id: '1'
+          },
+          {
+            selectType: 'yearId',
+            index: 2,
+            select: false,
+            name: '1年(含)-2年',
+            id: '2'
+          },
+          {
+            selectType: 'yearId',
+            index: 2,
+            select: false,
+            name: '2年(含)-3年',
+            id: '3'
+          },
+          {
+            selectType: 'yearId',
+            index: 2,
+            select: false,
+            name: '3年及以上',
+            id: '4'
+          }
+        ]
+      }
+    ]
+  }
+  mixins = [mixin]
+  methods = {
+    // 关闭
+    toastMask() {
+      this.chooseShow = false
+      this.$apply()
+    },
+    // 选中
+    selectedFun(item) {
+      let arr = this.type[item.index].list
+      arr.forEach(ele => {
+        ele.select = false
+        if (ele.id == item.id) {
+          ele.select = !item.select
+          this.$apply()
+        }
+      })
+    },
+    // 重置
+    resetFun() {
+      this.type.forEach(element => {
+        element.list.forEach(ele => {
+          ele.select = false
+        })
+      })
+      this.$apply()
+    },
+    // 确定
+    submitFun() {
+      this.chooseType = []
+      this.submitData.priceId = ''
+      this.submitData.hourId = ''
+      this.submitData.yearId = ''
+      this.type.forEach(element => {
+        delete this.newSelect[element.list[0].selectType]
+        element.list.forEach(ele => {
+          if (ele.select) {
+            this.chooseType.push(ele)
+            switch (ele.index) {
+              case 0:
+                // 价格
+                this.submitData.priceId = ele.id
+                this.newSelect[ele.selectType] = ele
+                break
+              case 1:
+                // 使用小时数
+                this.submitData.hourId = ele.id
+                this.newSelect[ele.selectType] = ele
+                break
+              case 2:
+                // 出厂年限
+                this.submitData.yearId = ele.id
+                this.newSelect[ele.selectType] = ele
+                break
+            }
+          }
+        })
+      })
+      this.chooseShow = false
+      this.$apply()
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.view {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  .mask {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+  .choose {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 590rpx;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    z-index: 1;
+    .head {
+      font-size: 34rpx;
+      color: #353535;
+      height: 86rpx;
+      line-height: 86rpx;
+      text-align: center;
+      font-weight: 500;
+    }
+    .scroll-view {
+      height: calc(~'100vh - 176rpx');
+      .h4 {
+        font-size: 30rpx;
+        color: #353535;
+        background: #efeff4;
+        height: 68rpx;
+        line-height: 68rpx;
+        padding-left: 30rpx;
+        display: block;
+      }
+      .content {
+        padding: 40rpx 30rpx 10rpx;
+        background-color: #fff;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        text {
+          display: block;
+          font-size: 28rpx;
+          color: #353535;
+          text-align: center;
+          padding: 0 20rpx;
+          margin-right: 24rpx;
+          margin-bottom: 30rpx;
+          border: 1rpx solid #e5e5e5;
+          border-radius: 4rpx;
+          height: 60rpx;
+          line-height: 60rpx;
+          transition: background 0.5s linear;
+          &.selected {
+            color: #fff;
+            background: #486cdc;
+          }
+        }
+      }
+    }
+    .footer {
+      height: 90rpx;
+      display: flex;
+      flex-direction: row;
+      border-top: 1rpx solid #e5e5e5;
+      flex-wrap: wrap;
+      text {
+        font-size: 34rpx;
+        line-height: 90rpx;
+        text-align: center;
+        &.reset {
+          background-color: #fff;
+          color: #486cdc;
+          width: 220rpx;
+        }
+        &.submit {
+          flex: 1;
+          background: #486cdc;
+          color: #fff;
+        }
+      }
+    }
+  }
+}
+</style>

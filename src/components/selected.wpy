@@ -1,0 +1,223 @@
+<template>
+  <view class="view">
+    <text
+      wx:for="{{startArr}}"
+      wx:key="{{index}}"
+      class="{{ item.select ? 'selected' : '' }}"
+      @tap="selectFun({{index}})"
+    >{{item.name}}</text>
+    <view
+      wx:for="{{newSelect}}"
+      wx:key="{{index}}"
+      @tap="selectListFun({{index}})"
+      class="select item0"
+      wx:if="{{item}}"
+      >
+      <text>{{item.name}}</text>
+    </view>
+    <!-- 加机型 -->
+    <view class="add" wx:if="{{typeBtn}}" @tap="showList('typeMode')">
+      <text>请选择机型</text>
+    </view>
+    <!-- 加品牌 -->
+    <view class="add" wx:if="{{brandBtn}}" @tap="showList('brandShow')">
+      <text>请选择品牌</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import mixin from '../mixins'
+export default class Index extends wepy.component {
+  props = {
+    // 机型
+    typeMode: {
+      type: Boolean,
+      default: false,
+      twoWay: true
+    },
+    // 品牌
+    brandShow: {
+      type: Boolean,
+      default: false,
+      twoWay: true
+    },
+    submitData: {
+      type: Object,
+      twoWay: true
+    },
+    // 选中值
+    newSelect: {
+      twoWay: true
+    },
+    // 固定参数
+    startArr: {
+      twoWay: true
+    }
+  }
+  data = {
+    // 调起弹窗按钮
+    brandBtn: false,
+    typeBtn: false
+  }
+  watch = {
+    newSelect(newVal, oldVal) {
+      if (!newVal.brandId && newVal.typeMode) {
+        this.brandBtn = true
+        this.typeBtn = false
+      } else if (newVal.brandId && !newVal.typeMode) {
+        this.typeBtn = true
+        this.brandBtn = false
+      } else if (
+        (newVal.brandId && newVal.typeMode) ||
+        (!newVal.brandId && !newVal.typeMode)
+      ) {
+        this.typeBtn = false
+        this.brandBtn = false
+      }
+      this.$apply()
+    }
+  }
+  mixins = [mixin]
+  methods = {
+    // 弹出筛选框
+    showList(type) {
+      this[type] = true
+      this.$apply()
+    },
+    // 固定参数选择
+    selectFun(index) {
+      this.startArr[index].select = !this.startArr[index].select
+      // 删除输入关键字
+      if (this.startArr[index].id == 2) {
+        if (this.startArr[index].select) {
+          this.submitData.keyword = this.startArr[index].name
+          wx.setStorage({
+            key: 'screenVal',
+            data: this.startArr[index].name
+          })
+          delete this.newSelect.keyword
+        } else {
+          wx.removeStorage({
+            key: 'screenVal'
+          })
+        }
+      } else {
+        let data = this.startArr[index]
+        if (data.select) {
+          this.submitData[data.type] = data.id
+        } else {
+          this.submitData[data.type] = ''
+        }
+      }
+
+      this.$apply()
+    },
+    // 增删参数
+    selectListFun(index) {
+      delete this.newSelect[index]
+
+      this.submitData[index] = ''
+      this.$apply()
+    }
+  }
+  onShow() {}
+}
+</script>
+
+<style lang="less" scoped>
+.view {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  padding: 32rpx 0 12rpx 30rpx;
+  background: #efeff4;
+  text {
+    padding: 0 20rpx;
+    font-size: 26rpx;
+    color: #353535;
+    line-height: 52rpx;
+    background: #ffffff;
+    border: 1rpx solid #dce2ee;
+    border-radius: 4rpx;
+    margin-right: 24rpx;
+    margin-bottom: 20rpx;
+    box-sizing: border-box;
+    transition: background 0.3s linear;
+    &.selected {
+      background-color: #486cdc;
+      border: 1rpx solid #486cdc;
+      color: #fff;
+    }
+  }
+  .select {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-right: 24rpx;
+    margin-bottom: 20rpx;
+    background: #ffffff;
+    border: 1rpx solid #dce2ee;
+    border-radius: 4rpx;
+    text {
+      margin: 0;
+      padding: 0 12rpx 0 20rpx;
+      border: none;
+    }
+    &:after {
+      content: '\e635';
+      width: 42rpx;
+      height: 16rpx;
+      display: block;
+      font-family: 'TieJia';
+      border-left: 1rpx solid #e5e5e5;
+      font-size: 10px;
+      font-weight: 900;
+      text-align: center;
+      line-height: 16rpx;
+    }
+    &:first-child {
+      margin-left: 24rpx;
+      &:before {
+        content: '';
+        display: block;
+        position: absolute;
+        left: -24rpx;
+        top: 11rpx;
+        height: 30rpx;
+        width: 1px;
+        background-color: #dce2ee;
+      }
+    }
+  }
+  .add {
+    display: flex;
+    align-items: center;
+    margin-right: 24rpx;
+    margin-bottom: 20rpx;
+    background: #ffffff;
+    border: 1rpx solid #dce2ee;
+    border-radius: 4rpx;
+    text {
+      margin: 0;
+      padding: 0 20rpx 0 0;
+      border: none;
+      color: #486cdc;
+    }
+    &:before {
+      content: '\e608';
+      width: 46rpx;
+      height: 16rpx;
+      line-height: 16rpx;
+      box-sizing: border-box;
+      padding-left: 6rpx;
+      display: block;
+      font-family: 'TieJia';
+      font-size: 10px;
+      text-align: center;
+      color: #486cdc;
+    }
+  }
+}
+</style>

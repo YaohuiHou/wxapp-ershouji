@@ -1,0 +1,227 @@
+<template>
+  <view class="serve">
+    <view class="figure"></view>
+    <view class="goods">
+      <text class="title">货不对版 7天可退</text>
+      <view class="content">
+        <text class="head">纳入"铁甲保"专区设备，铁甲对设备如下指标进行检测鉴定，并出具专业检测报告。如您购买铁甲保专区设备，7天内针对下述检测项出现货不对版，经鉴定确认后，铁甲承诺无条件退货或赔偿。具体检测项说明如下：</text>
+        <text class="h4">基本信息</text>
+        <text class="section">包括出厂年份和设备型号。出厂年份以年为单位；设备型号以各品牌厂家标准型号为准。</text>
+        <text class="section">出厂年份或设备型号出现货不对版，以赔偿现金为主，具体赔偿金额视车况、成交金额而定。</text>
+        <text class="h4">车况信息</text>
+        <text>包括是否事故车、火烧车、水泡车。</text>
+        <text class="section">事故车是指发生过重大撞击、侧翻等导致设备原机变形严重的情形。轻微碰撞及侧翻不在此保障范围。</text>
+        <text class="section">水泡车是指设备被水浸泡超过驾驶室座位的情形。除此以外情形不在此保障范围。</text>
+        <text class="section">火烧车是指设备部分着火或全部着火导致设备性能严重受损达到无法使用的情形。</text>
+        <text class="section">出现事故车或火烧车或水泡车货不对版，优先赔偿现金为主，具体赔偿金额视车况、成交金额而定。如赔偿不成，经双方沟通一致，可办理退车。</text>
+      </view>
+    </view>
+    <view class="process">
+      <text class="title">退货流程</text>
+      <view class="content">
+        <view class="item">
+          <view class="icon"></view>
+          <view class="some">
+            <text class="h5">拨打"铁甲保"申诉热线</text>
+            <view>如出现货不对版，您只需拨打<text class="tel" @tap="callPhone">{{callTel}}</text>申诉热线，陈述情况并提供您的交易信息，铁甲会立即专人受理该业务。</view>
+          </view>
+        </view>
+        <view class="item">
+          <view class="icon"></view>
+          <view class="some">
+            <text class="h5">设备评估鉴定</text>
+            <view>信息核实属实后，会有专业技术鉴定专家与您联系，由专家对设备进行现场评估鉴定，如鉴定结果与发布的检测报告不一致，则启动货不对版赔付流程。</view>
+          </view>
+        </view>
+        <view class="item">
+          <view class="icon"></view>
+          <view class="some">
+            <text class="h5">赔付沟通</text>
+            <view>后续铁甲会与您沟通具体赔付事宜，按照购机时签署协议约定标准进行现金赔偿或退机。</view>
+          </view>
+        </view>
+      </view>
+      <view class="footer">想了解更多请咨询 <text class="tel" @tap="callPhone">{{callTel}}</text></view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import mixins from '../mixins'
+
+export default class Index extends wepy.page {
+  config = {
+    navigationBarTitleText: '铁甲保服务介绍'
+  }
+  components = {}
+
+  mixins = [mixins]
+
+  data = {
+    callTel: '4006886288'
+  }
+
+  methods = {
+    // 拨打电话
+    callPhone() {
+      wx.makePhoneCall({
+        phoneNumber: this.callTel
+      })
+    }
+  }
+
+  events = {}
+
+  onLoad() {}
+}
+</script>
+
+<style lang="less" scoped>
+.title {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  position: relative;
+  padding-left: 45rpx;
+  border-bottom: 1rpx solid #e5e5e5;
+  height: 110rpx;
+  box-sizing: border-box;
+  font-size: 36rpx;
+  color: #353535;
+  line-height: 110rpx;
+  background: #fff;
+  border-left: 5rpx solid #486cdc;
+  font-weight: bold;
+  &:before {
+    content: '';
+    display: flex;
+    width: 63rpx;
+    height: 63rpx;
+    background: url('https://bbs.cehome.com/wxApp/v.2/goods.png') no-repeat 50%
+      50%;
+    background-size: 100% 100%;
+    margin-right: 20rpx;
+  }
+}
+.serve {
+  background: #efeff4;
+  .figure {
+    width: 100%;
+    height: 420rpx;
+    margin-bottom: 20rpx;
+    background: url('https://bbs.cehome.com/wxApp/v.2/serve.png') no-repeat 50%
+      100%;
+    background-size: 100%;
+  }
+  .goods {
+    background-color: #fff;
+    margin-bottom: 20rpx;
+    .content {
+      padding: 34rpx 50rpx 0;
+      text {
+        display: block;
+        font-size: 28rpx;
+        color: #353535;
+        line-height: 44rpx;
+      }
+      .head {
+        padding-bottom: 50rpx;
+      }
+      .h4 {
+        padding-left: 30rpx;
+        line-height: 40rpx;
+        font-size: 32rpx;
+        color: #333;
+        margin: 22rpx 0;
+        position: relative;
+        font-weight: bold;
+        &:before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 50%;
+          width: 6rpx;
+          height: 28rpx;
+          background-color: #486cdc;
+          transform: translateY(-50%);
+        }
+      }
+      .section {
+        padding-bottom: 50rpx;
+      }
+    }
+  }
+  .process {
+    background-color: #fff;
+    padding-bottom: 200rpx;
+    .title:before {
+      background-image: url('https://bbs.cehome.com/wxApp/v.2/return.png');
+    }
+    .content {
+      padding: 66rpx 50rpx 0;
+      .item {
+        display: flex;
+        justify-content: flex-start;
+        padding-bottom: 54rpx;
+        position: relative;
+        &:before {
+          content: '';
+          position: absolute;
+          left: 11rpx;
+          top: 23rpx;
+          width: 1rpx;
+          height: 100%;
+          opacity: 0.4;
+          background: #486cdc;
+        }
+        &:last-child:before {
+          display: none;
+        }
+        .icon {
+          width: 22rpx;
+          height: 22rpx;
+          border-radius: 50% 50%;
+          background: #fff;
+          box-sizing: border-box;
+          border: 6rpx solid #486cdc;
+          margin-right: 40rpx;
+          margin-top: 11rpx;
+          position: relative;
+          z-index: 1;
+        }
+        .some {
+          width: calc(~'100% - 62rpx');
+          text,
+          view {
+            display: block;
+            font-size: 28rpx;
+            color: #888;
+            line-height: 44rpx;
+            &.tel {
+              color: #486cdc;
+              display: inline;
+            }
+          }
+          .h5 {
+            font-size: 32rpx;
+            color: #353535;
+            padding-bottom: 6rpx;
+            font-weight: 500;
+          }
+        }
+      }
+    }
+    .footer {
+      margin-top: 45rpx;
+      text-align: center;
+      font-size: 28rpx;
+      color: #333333;
+      line-height: 44rpx;
+      .tel {
+        color: #486cdc;
+      }
+    }
+  }
+}
+</style>

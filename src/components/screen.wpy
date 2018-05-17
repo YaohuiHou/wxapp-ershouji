@@ -1,0 +1,166 @@
+<template>
+  <view class="screen">
+    <view class="head">
+      <navigator class="city" url="/pages/city" hover-class="none">
+        <text>{{address.name}}</text>
+      </navigator>
+      <view class="search" bindtap="navigator">
+        <text>搜索</text>
+      </view>
+    </view>
+    <view class="list">
+      <text wx:for="{{list}}" wx:key="{{index}}" @tap="showList({{item.type}})">{{item.name}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import mixin from '../mixins'
+export default class Index extends wepy.component {
+  props = {
+    address: {
+      twoWay: true
+    },
+    // 筛选弹窗
+    chooseShow: {
+      type: Boolean,
+      default: false,
+      twoWay: true
+    },
+    // 机型
+    typeMode: {
+      type: Boolean,
+      default: false,
+      twoWay: true
+    },
+    // 品牌
+    brandShow: {
+      type: Boolean,
+      default: false,
+      twoWay: true
+    },
+    // 排序
+    sortShow: {
+      type: Boolean,
+      default: false,
+      twoWay: true
+    }
+  }
+  data = {
+    list: [
+      { name: '排序', type: 'sortShow' },
+      { name: '机型', type: 'typeMode' },
+      { name: '品牌', type: 'brandShow' },
+      { name: '筛选', type: 'chooseShow' }
+    ]
+  }
+  mixins = [mixin]
+  methods = {
+    navigator() {
+      wepy.navigateTo({
+        url: '/pages/screen'
+      })
+    },
+    // 弹出筛选框
+    showList(type) {
+      this[type] = true
+      this.$apply()
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.screen {
+  background-color: #fff;
+  .head {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 88rpx;
+    width: 100%;
+    padding: 12rpx 20rpx;
+    box-sizing: border-box;
+    .city {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      min-width: 130rpx;
+      max-width: 200rpx;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      padding-right: 10rpx;
+      text {
+        max-width: 180rpx;
+        font-size: 28rpx;
+        color: #353535;
+        margin-right: 10rpx;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      &:after {
+        content: '';
+        display: block;
+        border: 7rpx solid transparent;
+        border-top: 9rpx solid #353535;
+        width: 0;
+        height: 0;
+        transform: translateY(4rpx);
+      }
+    }
+    .search {
+      flex-grow: 1;
+      background: #efeff4;
+      border-radius: 8rpx;
+      height: 64rpx;
+      font-size: 28rpx;
+      color: #888888;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text {
+        line-height: 34rpx;
+      }
+      &:before {
+        content: '\e819';
+        display: block;
+        margin-right: 15rpx;
+        font-family: 'TieJia';
+        font-size: 28rpx;
+        color: #888;
+        line-height: 34rpx;
+        vertical-align: middle;
+      }
+    }
+  }
+  .list {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    height: 80rpx;
+    text {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28rpx;
+      color: #353535;
+      text-align: center;
+      &:after {
+        content: '';
+        display: block;
+        border: 7rpx solid transparent;
+        border-top: 9rpx solid #353535;
+        width: 0;
+        height: 0;
+        transform: translate3d(4rpx, 4rpx, 0);
+      }
+    }
+  }
+}
+</style>

@@ -1,0 +1,153 @@
+<template>
+  <navigator class="item" url="/pages/detail?eqId={{item.id}}" hover-class="none">
+    <view class="content">
+      <view class="figure">
+        <text class="hint" wx:if="{{item.reducedPriceStr}}">已降{{item.reducedPriceStr}}</text>
+        <image src="{{item.firstImgPathDto.pathSma}}"></image>
+      </view>
+      <view class="introduce">
+        <text class="h4">{{item.brandName}}{{item.modelName}}{{item.categoryName}}</text>
+        <view class="info">
+          <text>{{item.complexFieldDesc}}</text>
+          <text>{{item.provinceName}}-{{item.cityName}}</text>
+        </view>
+        <view class="mark">
+          <text wx:if="{{item.showNewUpload}}">新上架</text>
+          <text wx:if="{{item.showManagerRecommend}}">管家推荐</text>
+        </view>
+        <view class="footer">
+          <text class="price">{{item.formatPrice}}万</text>
+          <text wx:if="{{item.downPaymentStr}}">首付{{item.downPaymentStr}}万</text>
+        </view>
+        <text class="btn">询底价</text>
+      </view>
+    </view>
+  </navigator>
+</template>
+
+
+<script>
+import wepy from 'wepy'
+import mixin from '../mixins'
+export default class Index extends wepy.component {
+  props = {
+    item: {}
+  }
+  data = {
+    img: 'http://placehold.it/130x98'
+  }
+  mixins = [mixin]
+
+  onLoad() {}
+
+  methods = {}
+}
+</script>
+
+<style lang="less" scoped>
+.item {
+  padding-left: 20rpx;
+  background-color: #fff;
+  .content {
+    padding: 30rpx 22rpx 30rpx 0;
+    border-bottom: 1rpx solid #e5e5e5;
+    display: flex;
+    justify-content: flex-start;
+    flex-direction: row;
+    .figure {
+      width: 260rpx;
+      height: 195rpx;
+      margin-right: 32rpx;
+      position: relative;
+      .hint {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 32rpx;
+        padding: 0 13rpx 0 16rpx;
+        background: #ff4035;
+        font-size: 20rpx;
+        line-height: 32rpx;
+        border-bottom-right-radius: 24rpx;
+        color: #fff;
+      }
+      image {
+        width: 100%;
+        height: 100%;
+        vertical-align: top;
+      }
+    }
+    .introduce {
+      position: relative;
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      .h4 {
+        font-size: 28rpx;
+        color: #353535;
+        line-height: 40rpx;
+        font-weight: 500;
+      }
+      .info {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        margin: 13rpx 0 20rpx;
+        text {
+          font-size: 22rpx;
+          color: #888888;
+          line-height: 30rpx;
+          margin-right: 24rpx;
+        }
+      }
+      .mark {
+        display: flex;
+        height: 32rpx;
+        flex-direction: row;
+        justify-content: flex-start;
+        margin-bottom: 24rpx;
+        text {
+          display: block;
+          background: #feece3;
+          border-radius: 4rpx;
+          font-size: 18rpx;
+          color: #fb7530;
+          line-height: 32rpx;
+          margin-right: 20rpx;
+          padding: 0 11rpx;
+        }
+      }
+      .footer {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        text {
+          font-size: 24rpx;
+          color: #ff4035;
+          line-height: 32rpx;
+          &.price {
+            font-size: 32rpx;
+            line-height: 32rpx;
+            font-weight: 500;
+            margin-right: 26rpx;
+          }
+        }
+      }
+      .btn {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        width: 120rpx;
+        height: 60rpx;
+        line-height: 60rpx;
+        background: #ffffff;
+        border: 1rpx solid #486cdc;
+        border-radius: 6rpx;
+        font-size: 26rpx;
+        color: #486cdc;
+        text-align: center;
+      }
+    }
+  }
+}
+</style>

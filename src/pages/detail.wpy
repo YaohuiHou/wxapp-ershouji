@@ -1,0 +1,1105 @@
+<template>
+  <view class="detail">
+    <scroll-view class="content" scroll-y enable-back-to-top="true">
+      <!-- 轮播 -->
+      <view class="swiper">
+        <view class="page">
+          {{current}}/{{detailHeader.eqphotoList.length}}
+        </view>
+        <!-- 编码 -->
+        <view class="code">编号:{{detailHeader.eqphotoList[current-1].imgId}}</view>
+        <swiper indicator-dots="{{indicatorDots}}"
+          bindchange="current"
+          circular autoplay interval="2000" duration="800"
+        >
+          <block wx:for="{{detailHeader.eqphotoList}}" wx:key="{{index}}">
+            <swiper-item>
+              <image src="{{item.imgPathDto.pathMid}}" class="slide-image"/>
+            </swiper-item>
+          </block>
+        </swiper>
+      </view>
+      <!-- 详情 -->
+      <view class="info">
+        <view class="head">
+          <text class="h5">{{detailHeader.equipment.brand}} {{detailHeader.equipment.model}} {{detailHeader.equipment.category}}</text>
+          <view class="lis">
+            <text wx:if="{{detailHeader.equipment.showNewUpload}}">新上架</text>
+            <text wx:if="{{detailHeader.equipment.showManagerRecommend}}">管家推荐</text>
+          </view>
+        </view>
+        <view class="price">
+          <view class="price-hint">
+            <view>{{ detailHeader.equipment.price/10000 }}<text>万</text></view>
+            <!-- 降价信息 -->
+            <text wx:if="{{detailHeader.equipment.reducedPriceStr}}">（已降价{{detailHeader.equipment.reducedPriceStr}}俯）</text>
+          </view>
+          <text wx:if="{{detailHeader.equipment.downPaymentStr}}">首付{{detailHeader.equipment.downPaymentStr}}万</text>
+          <view class="btn" @tap="telToast">
+            <text>询底价</text>
+          </view>
+        </view>
+        <navigator url="/pages/loans?eqId={{eqId}}" hover-class="none" wx:if="{{detailHeader.equipment.downPaymentStr}}">
+          <view class="figure">
+            <view class="img">
+              <image src="https://bbs.cehome.com/wxApp/v.2/logo.png"></image>
+            </view>
+            <text>半价购机，你可以拥有更多</text>
+          </view>
+        </navigator>
+      </view>
+      <!-- 铁甲保 -->
+      <view class="tiejia">
+        <view class="gradient">
+          <view class="ensure">
+            <view class="h3">
+              <text>铁甲保认证</text>
+              <view class="icon"></view>
+            </view>
+            <text class="hint">购买七天内出现现货不对版，铁甲承诺无条件赔付</text>
+            <navigator url="/pages/serve" hover-class="none">
+              <button plain>了解铁甲保</button>
+            </navigator>
+          </view>
+        </view>
+        <view class="gradient">
+          <view class="ensure">
+            <view class="h3">
+              <text>管家合影认证</text>
+              <view class="icon"></view>
+            </view>
+            <text class="hint">铁甲管家已去现场与设备合影，该设备真实存在，真实在售</text>
+          </view>
+        </view>
+      </view>
+      <!-- 介绍 -->
+      <view class="facility">
+        <text class="title">设备介绍</text>
+        <view class="ul-list">
+          <view class="li-item" wx:for="{{detailHeader.equipment.orderAttrbute}}" wx:key="{{index}}" wx:if="{{ index != '发布时间' }}">
+            <text class="span">{{item}}</text>
+            <text class="em">{{index}}</text>
+          </view>
+        </view> 
+        <text class="address">{{detailHeader.equipment.province}}{{detailHeader.equipment.city}}{{detailHeader.equipment.county}}</text>
+      </view>
+      <!-- 咨询管家 -->
+      <view class="steward">
+        <view class="header">
+          <view class="figure">
+            <image src="{{detailManInfo.imgPathDto.pathSma}}"></image>
+          </view>
+          <view class="user-info">
+            <text class="name">您的管家-{{detailManInfo.realname}}</text>
+            <text class="some">{{detailManInfo.extendsInfo}}</text>
+          </view>
+          <button plain data-phone="{{detailManInfo.workMobile}}" @tap="callPhone">联系管家</button>
+        </view>
+        <text class="describe">{{detailManInfo.remark}}</text>
+        <view class="promise">
+          <view class="warn">
+            <icon type="warn" size="12"></icon>
+            <text>以上信息不真实，铁甲承诺无条件赔付</text>
+          </view>
+          <view class="hint-list">
+            <view class="hint-li" wx:for="{{belive}}" wx:key="{{index}}">
+              <view class="figure">
+                <image src="{{item.img}}"></image>
+              </view>
+              <text>{{item.name}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+       <view class="steward">
+        <view class="header">
+          <view class="figure">
+            <image src="https://m.tiebaobei.com/res/img/menber-pic.jpg"></image>
+          </view>
+          <view class="user-info">
+            <text class="name">{{detailHomeManInfo.realName}}</text>
+            <text class="some">{{detailHomeManInfo.extendsInfo}}</text>
+          </view>
+          <button plain data-phone="{{detailHomeManInfo.username}}" @tap="telToast">联系卖家</button>
+        </view>
+        <text class="describe">{{detailHeader.equipment.des}}</text>
+      </view>
+      <!-- 购买流程 -->
+      <view class="process">
+        <text class="title">购买流程</text>
+        <view class="uls">
+          <view class="lis">
+            <text>电话咨询</text>
+            <text>专业答疑</text>
+          </view>
+          <view class="lis">
+            <text>管家带看</text>
+            <text>现场看车</text>
+          </view>
+          <view class="lis">
+            <text>签订协议</text>
+            <text>购机放心</text>
+          </view>
+          <view class="lis">
+            <text>交易完成</text>
+            <text>后续服务</text>
+          </view>
+        </view>
+      </view>
+      <!-- 设备实拍 -->
+      <view class="reality-img">
+        <text class="title">设备实拍</text>
+        <view class="img-list" style="max-height:{{showPages}}">
+          <block wx:for="{{showImgsList}}" wx:key="{{index}}">
+            <text>{{item.name}}</text>
+            <view class="figure" wx:for="{{item.imgs}}" wx:key="{{index}}">
+              <image src="{{item}}"></image>
+            </view>
+          </block>
+        </view>
+        <view class="btn" @tap="pagesShowFun" wx:if="{{showImgBtn}}">
+          <text>查看更多</text>
+          <view class="icon"></view>
+        </view>
+      </view>
+      <!-- 车源 -->
+      <view class="car-source">
+        <view class="sources">
+          <view class="{{goodBrand ? '' : 'selected'}}" data-id="0" id="0" @tap="goodOrBrand">
+            <text>优质车源</text>
+          </view>
+          <view class="{{goodBrand ? 'selected' : ''}}" data-id="1" id="1" @tap="goodOrBrand">
+            <text>同品牌车源</text>
+          </view>
+        </view>
+        <view class="car-list">
+          <view class="car-item">
+            <repeat for="{{repeatItemList}}" key="index" index="index" item="item">
+              <listItem :item="item"></listItem>
+            </repeat>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="footer">
+      <text class="pay" @tap="telToast">马上询价</text>
+      <button open-type="share" class="sell">找人看值不值</button>
+    </view>
+    <!-- 电话弹窗 -->
+    <toastView
+      :toastShow.sync="toastShow"
+      :toastContent.sync="toastContent"
+      :brandeqId.sync="brandeqId"
+    ></toastView>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import mixins from '../mixins'
+import listItem from '../components/carItem'
+import toastView from '../components/toast'
+
+export default class Index extends wepy.page {
+  config = {
+    navigationBarTitleText: '车辆详情',
+    backgroundColorTop: '#ffffff',
+    enablePullDownRefresh: false
+  }
+  components = {
+    listItem,
+    toastView
+  }
+
+  mixins = [mixins]
+
+  data = {
+    current: 1,
+    // 弹窗是否隐藏
+    toastShow: true,
+    // 提交电话 所需的设备id
+    brandeqId: '',
+    toastContent: {
+      // 提示文案
+      toastHeader: '我要买设备',
+      // 按钮文案
+      toastButton: '免费通话',
+      // 文案
+      toastContent: '请填写手机号，稍后铁甲管家会与您联系！'
+    },
+    // 参数
+    eqId: '',
+    // 保证
+    belive: [
+      {
+        name: '非事故车',
+        img: 'https://bbs.cehome.com/wxApp/v.2/accident.png'
+      },
+      { name: '非火烧车', img: 'https://bbs.cehome.com/wxApp/v.2/hot.png' },
+      { name: '非水淹车', img: 'https://bbs.cehome.com/wxApp/v.2/water.png' }
+    ],
+    imgInfo: {
+      '101': '整机外观描述',
+      '102': '工作和回转装置',
+      '103': '行走机构',
+      '104': '驾驶室部分',
+      '105': '大件舱室',
+      '106': '上车部件',
+      '0': '其他'
+    },
+    // 详情信息
+    detailHeader: null,
+    // 管家信息
+    detailManInfo: null,
+    // 卖家信息
+    detailHomeManInfo: null,
+    // 展示数据条数
+    showPages: '1800rpx',
+    // 实拍图片
+    showImgsList: {},
+    showImgBtn: true,
+    repeatItemList: null,
+    // 优先车源
+    goodCarList: null,
+    // 同品牌车源
+    brandCarList: null,
+    // 车源切换
+    goodBrand: false
+  }
+
+  methods = {
+    current(e) {
+      this.current = e.detail.current + 1
+    },
+    // 展开消息
+    pagesShowFun() {
+      this.showPages = 'auto'
+      this.showImgBtn = false
+
+      this.$apply()
+    },
+    // 车源切换
+    goodOrBrand(e) {
+      let target = e.currentTarget
+      switch (target.id) {
+        case '0':
+          this.repeatItemList = this.goodCarList
+          this.goodBrand = false
+          break
+        case '1':
+          this.repeatItemList = this.brandCarList
+          this.goodBrand = true
+      }
+      this.$apply()
+    },
+    // 电话弹窗
+    telToast() {
+      // 买设备
+      this.toastContent.toastHeader = '我要买设备'
+      this.toastContent.toastButton = '免费通话'
+      this.toastContent.toastContent = '请填写手机号，稍后铁甲客服会与您联系！'
+      this.toastShow = false
+      this.$apply()
+    },
+    // 拨打电话
+    callPhone(e) {
+      let target = e.target
+      wx.makePhoneCall({
+        phoneNumber: target.dataset['phone']
+      })
+    }
+  }
+
+  onShareAppMessage(res) {
+    // 分享
+    if (res.from === 'button') {
+    }
+    return {
+      title: '铁甲二手机分享文案，文案待定',
+      path: `/pages/detail`,
+      imageUrl: '',
+      success: async res => {},
+      fail: res => {
+        // 转发失败
+      }
+    }
+  }
+
+  events = {}
+
+  onLoad(option) {
+    this.eqId = option.eqId
+    this.$apply()
+    this.detailHeaderFun()
+    this.detailManInfoFun()
+    this.detailHomeManInfoFun()
+    this.getGoodCarList()
+    this.getBrandCarList()
+  }
+
+  // 详情头
+  detailHeaderFun() {
+    wepy
+      .request({
+        url: `https://api2.tiebaobei.com/api/app/eqdetail/${
+          this.eqId
+        }?callback=1`
+      })
+      .then(res => {
+        let data = JSON.parse(res.data.substring(2, res.data.length - 1))
+        this.detailHeader = data
+        // 图片排序
+        this.detailHeader.eqphotoList.forEach(element => {
+          if (!this.showImgsList[element.photoPosition]) {
+            this.showImgsList[element.photoPosition] = {
+              name: this.imgInfo[element.photoPosition],
+              imgs: []
+            }
+          }
+          this.showImgsList[element.photoPosition].imgs.push(
+            element.imgPathDto.pathMid
+          )
+        })
+        console.log(this.showImgsList)
+
+        // 设备id
+        this.brandeqId = this.detailHeader.equipment.id
+        this.$apply()
+      })
+  }
+
+  // 管家
+  detailManInfoFun() {
+    wepy
+      .request({
+        url: `https://api2.tiebaobei.com/api/app/eqmanager/${
+          this.eqId
+        }?callback=1&request=requst`
+      })
+      .then(res => {
+        let data = JSON.parse(res.data.substring(2, res.data.length - 1))
+        if (data.ret == 0) {
+          this.detailManInfo = data.result
+        }
+        this.$apply()
+      })
+  }
+
+  // 卖家
+  detailHomeManInfoFun() {
+    wepy
+      .request({
+        url: `https://api2.tiebaobei.com/api/app/eqseller/${
+          this.eqId
+        }?callback=1&request=requst`
+      })
+      .then(res => {
+        let data = JSON.parse(res.data.substring(2, res.data.length - 1))
+        if (data.ret == 0) {
+          this.detailHomeManInfo = data.result
+        }
+        this.$apply()
+      })
+  }
+
+  // 车源列表
+  getGoodCarList() {
+    wepy
+      .request({
+        url: `https://api2.tiebaobei.com/api/app/eqRecommend/${
+          this.eqId
+        }?callback=1`
+      })
+      .then(res => {
+        let data = JSON.parse(res.data.substring(2, res.data.length - 1))
+        this.goodCarList = data
+        this.repeatItemList = this.goodCarList
+        this.$apply()
+      })
+  }
+
+  getBrandCarList() {
+    wepy
+      .request({
+        url: `https://api2.tiebaobei.com/api/app/eqSameBrandRecommend/${
+          this.eqId
+        }?callback=1`
+      })
+      .then(res => {
+        let data = JSON.parse(res.data.substring(2, res.data.length - 1))
+        this.brandCarList = data
+        this.$apply()
+      })
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.detail {
+  position: relative;
+  height: 100vh;
+  box-sizing: border-box;
+  padding: 0 0 100rpx;
+  overflow: hidden;
+  background: #efeff4;
+  .content {
+    height: 100%;
+    position: relative;
+    .swiper {
+      width: 100%;
+      height: 500rpx;
+      overflow: hidden;
+      position: relative;
+      swiper {
+        width: 100%;
+        height: 500rpx;
+      }
+      .code,
+      .page {
+        position: absolute;
+        bottom: 40rpx;
+        height: 40rpx;
+        border-radius: 40rpx;
+        background-color: rgba(0, 0, 0, 0.7);
+        line-height: 40rpx;
+        text-align: center;
+        font-size: 18rpx;
+        color: #ffffff;
+        z-index: 10;
+      }
+      .code {
+        right: 40rpx;
+        padding: 0 20rpx;
+      }
+      .page {
+        width: 80rpx;
+        left: 40rpx;
+      }
+      swiper-item {
+        width: 100%;
+        height: 500rpx;
+        image {
+          width: 100%;
+          height: 100%;
+        }
+      }
+    }
+    .info {
+      padding: 40rpx;
+      background-color: #fff;
+      margin-bottom: 20rpx;
+      .head {
+        display: flex;
+        flex-direction: column;
+        padding-bottom: 40rpx;
+        .h5 {
+          display: block;
+          font-size: 36rpx;
+          color: #353535;
+          line-height: 50rpx;
+          padding-bottom: 12rpx;
+          font-weight: bold;
+        }
+        .lis {
+          display: flex;
+          flex-direction: row;
+          flex-wrap: wrap;
+          text {
+            padding: 0 10rpx;
+            background: #feece3;
+            border-radius: 4rpx;
+            font-size: 18rpx;
+            color: #fb7530;
+            line-height: 32rpx;
+            margin-right: 20rpx;
+          }
+        }
+      }
+      .price {
+        position: relative;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        .price-hint {
+          display: flex;
+          flex-direction: row;
+          justify-content: flex-start;
+          align-items: baseline;
+          view {
+            font-size: 60rpx;
+            line-height: 84rpx;
+            color: #ff4035;
+            font-weight: bold;
+          }
+          text {
+            font-size: 30rpx;
+            line-height: 54rpx;
+            color: #ff4035;
+            font-family: 'TieJia';
+            padding: 0;
+          }
+        }
+        text {
+          padding-top: 4rpx;
+          font-size: 30rpx;
+          color: #fb7530;
+          line-height: 42rpx;
+        }
+        .btn {
+          position: absolute;
+          right: 0;
+          bottom: 8rpx;
+          width: 140rpx;
+          height: 60rpx;
+          background: #486cdc;
+          line-height: 60rpx;
+          border-radius: 6rpx;
+          box-sizing: border-box;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          overflow: hidden;
+          &:after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 120rpx;
+            height: 60rpx;
+            background-color: #85a3ff;
+            border-top-left-radius: 30rpx;
+            border-bottom-left-radius: 30rpx;
+            animation: buttonShow 2s linear infinite;
+          }
+          text {
+            font-size: 26rpx;
+            color: #ffffff;
+            line-height: 60rpx;
+            position: relative;
+            z-index: 1;
+            animation: buttonText 2s ease-in infinite;
+          }
+        }
+      }
+      .figure {
+        padding-top: 42rpx;
+        position: relative;
+        display: flex;
+        align-items: center;
+        height: 107rpx;
+        .img {
+          width: 107rpx;
+          height: 107rpx;
+          position: absolute;
+          left: 0;
+          bottom: 0;
+          image {
+            width: 100%;
+            height: 100%;
+          }
+        }
+        text {
+          height: 80rpx;
+          width: 100%;
+          background-color: #fb7430;
+          padding-left: 124rpx;
+          box-sizing: border-box;
+          font-size: 24rpx;
+          color: #ffffff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 10px 12px 0 rgba(251, 140, 82, 0.33);
+          &:after {
+            content: '';
+            display: block;
+            margin-left: 14rpx;
+            width: 10rpx;
+            height: 10rpx;
+            border-top: 1rpx solid #fff;
+            border-right: 1rpx solid #fff;
+            transform: rotate(45deg);
+          }
+        }
+      }
+    }
+    .tiejia {
+      padding: 40rpx;
+      background: #fff;
+      margin-bottom: 20rpx;
+      .gradient {
+        width: 100%;
+        height: 200rpx;
+        background-image: linear-gradient(
+          -225deg,
+          #fadeae 0%,
+          #fff1d8 45%,
+          #fbdba5 100%
+        );
+        border-radius: 8rpx;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 24rpx;
+        &:last-child {
+          margin-bottom: 0;
+        }
+        &:before,
+        &:after {
+          content: '';
+          position: absolute;
+          right: 0;
+          top: 0;
+          width: 416rpx;
+          height: 200rpx;
+          background-image: linear-gradient(
+            -225deg,
+            rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0) 44.9%,
+            #f7e2bd 45%,
+            #f7e2bd 47%,
+            rgba(247, 226, 189, 0.9) 100%
+          );
+        }
+        &:after {
+          width: 335rpx;
+          z-index: 1;
+          background-image: linear-gradient(
+            -225deg,
+            rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0) 44.9%,
+            #f2d9af 45%,
+            #f2d9af 100%
+          );
+        }
+      }
+      .ensure {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 200rpx;
+        padding: 30rpx 15rpx 30rpx 30rpx;
+        box-sizing: border-box;
+        z-index: 10;
+        .h3 {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          line-height: 56rpx;
+          margin-bottom: 36rpx;
+          text {
+            font-size: 40rpx;
+            color: #8e7243;
+            font-weight: bold;
+          }
+          .icon {
+            width: 30rpx;
+            height: 34rpx;
+            margin-left: 13rpx;
+            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAiCAMAAAB/VplGAAABNVBMVEUAAACOc0OPc0SPckSPckOdgVKOc0OPc0SQc0WPc0SRdEWPc0SPckSPc0SPckOPc0SPdESQdESTdEiVeEr43KuPckSPckOPc0OQc0P/3rX43Kz426yPckOPckT43KyOc0P33KyPc0OQdEP43az43Kv7362RdESQdEaQdkX73bD/4K333Kv426z33Kz43Kz33ayPckP43a2Qc0X73a763q754K2SdEeQekqYfEX/48bBwaP326uOckT43Kz33KyPc0SOckWPc0T63K753q353Kz636+Sc0n/5rP326uOckOwk2SojF2UeEmPdES9oXGeg1Prz5/GqnvRtISqj1+ih1e3m2z22ajy1qXKrn6ZfE3jx5fTt4jFqnnCpXW/o3O4nG2QdUbw1KPlyZjfw5Tavo/NsYGkh1jXPN1yAAAASHRSTlMA1uX48wn8hFdPQOzgyn1dS0ggG/mrootqD/Dd0cS/v6Cbb2ZJPjoyLyIZ6NfGiYRxcGI4LygnFxIJBOu3sKaSkWZeVFAwKhRgdoRBAAAB4UlEQVQ4y5XQ53LaQBSG4Q+xEojeOwbTwb2X9L5HCETAoThuqfd/CVlWOIFB45m8PyTNPLtntIuV9GAwAudUXzpAGlHA41Pxt1g0oocr6WRBCNs8baUYkbuQ8lS8eiQah5/sWDEdVZHNQtVfBxnZKSD/fuZQb8Qh+rCby+2dQBRv6IeZfeYGuYCLbOe4dlDOc1m+fFA77mQvAMVm7tj/8XjyJA/N6+ln2dCJu7OxSbIrB76mW272uchwYoMGT/CQepyb1hfRbJ0H5px/W9aDaVnGGk/NkWCRtH+sLXb/7PcGXZE5mz8HnCcA5keAAVtcJHg0uuqZJnVHI8HbOKMgnlMcGzbPz35vGd17ObuMKG0iRF7sPvKN+c0yvve+clEVaQrDJ5YcLfiGfs1/rf8gPPEJLjEYAaYiL3lIfT7nsUE/+As0qATAI0ZUJU9uFweb3HF+hBR5BcfcAfVyW1ybfeC7qXy9RFNTVMjtIdQTfKVnbRTlZkBVWAvVFU3UkaES7CKkxLC3zG8R0dhHiXK86xzvco+4VUeTydGLXpHrFO0dWzc68PmpgqU8xN4A73cE1nAZ0rQMVvL6qegDTtpAtECK+FztLElUCqtqOEiUOsd6TbGAMaJkC87FQi5XKIal/gBOlKdlQaW7NAAAAABJRU5ErkJggg==')
+              no-repeat;
+            background-size: 30rpx 34rpx;
+          }
+        }
+        .hint {
+          display: block;
+          font-size: 24rpx;
+          color: #8e7243;
+        }
+        button {
+          position: absolute;
+          right: 30rpx;
+          top: 36rpx;
+          width: 140rpx;
+          height: 50rpx;
+          line-height: 50rpx;
+          text-align: center;
+          border: 1rpx solid #8e7243;
+          border-radius: 6rpx;
+          font-size: 22rpx;
+          color: #8e7243;
+          background: transparent;
+          padding: 0;
+        }
+      }
+    }
+    .title {
+      display: block;
+      position: relative;
+      padding-left: 38rpx;
+      border-bottom: 1rpx solid #e5e5e5;
+      height: 110rpx;
+      box-sizing: border-box;
+      font-size: 36rpx;
+      color: #353535;
+      line-height: 110rpx;
+      background: #fff;
+      font-weight: bold;
+      &:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 110rpx;
+        width: 5rpx;
+        background: #486cdc;
+      }
+    }
+    .facility {
+      background: #fff;
+      padding-bottom: 56rpx;
+      margin-bottom: 20rpx;
+      .ul-list {
+        padding: 56rpx 0rpx 30rpx;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        .li-item {
+          flex-shrink: 1;
+          padding: 0 20rpx;
+          display: flex;
+          flex-direction: column;
+          text-align: center;
+          .span {
+            font-size: 36rpx;
+            color: #353535;
+            line-height: 50rpx;
+            margin-bottom: 16rpx;
+            font-weight: bold;
+          }
+          .em {
+            font-size: 24rpx;
+            color: #888888;
+            line-height: 32rpx;
+          }
+        }
+      }
+      .address {
+        padding-left: 53rpx;
+        line-height: 45rpx;
+        font-size: 32rpx;
+        color: #353535;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        line-height: 45rpx;
+        &:before {
+          content: '\e7c4';
+          font-family: 'TieJia';
+          display: block;
+          width: 20rpx;
+          height: 30rpx;
+          font-size: 30rpx;
+          line-height: 30rpx;
+          color: #888;
+          margin-right: 15rpx;
+        }
+      }
+    }
+    .steward {
+      margin-bottom: 20rpx;
+      background: #fff;
+      padding-bottom: 55rpx;
+      .header {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 60rpx 40rpx 54rpx;
+        .figure {
+          width: 100rpx;
+          height: 100rpx;
+          margin-right: 24rpx;
+          border-radius: 50%;
+          overflow: hidden;
+          image {
+            width: 100%;
+            height: 100%;
+          }
+        }
+        .user-info {
+          width: calc(~'100% - 264rpx');
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: flex-start;
+          text {
+            flex: 1;
+            width: 100%;
+          }
+          .name {
+            font-size: 30rpx;
+            color: #353535;
+            line-height: 42rpx;
+            margin-bottom: 12rpx;
+          }
+          .some {
+            font-size: 24rpx;
+            color: #888888;
+            line-height: 32rpx;
+          }
+        }
+        button {
+          width: 140rpx;
+          height: 60rpx;
+          line-height: 60rpx;
+          background: #486cdc;
+          border-radius: 6rpx;
+          box-sizing: border-box;
+          font-size: 26rpx;
+          color: #ffffff;
+          text-align: center;
+          padding: 0;
+          border: none;
+        }
+      }
+      .describe {
+        display: block;
+        font-size: 28rpx;
+        color: #353535;
+        padding: 0 40rpx;
+        line-height: 40rpx;
+      }
+      .promise {
+        padding-top: 20rpx;
+        .warn {
+          padding-left: 40rpx;
+          padding-bottom: 78rpx;
+          height: 32rpx;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          icon {
+            width: 12px;
+            height: 12px;
+            color: #f57123;
+            margin-right: 8rpx;
+          }
+          text {
+            font-size: 24rpx;
+            color: #888888;
+          }
+        }
+        .hint-list {
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+          .hint-li {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            .figure {
+              width: 60rpx;
+              height: 66rpx;
+              margin-bottom: 26rpx;
+              image {
+                width: 100%;
+                height: 100%;
+              }
+            }
+            text {
+              line-height: 32rpx;
+              font-size: 24rpx;
+              color: #888;
+            }
+          }
+        }
+      }
+    }
+    .process {
+      background: #fff;
+      padding-bottom: 50rpx;
+      margin-bottom: 20rpx;
+      .uls {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        position: relative;
+        padding-top: 52rpx;
+        &:before {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: 63rpx;
+          width: 75%;
+          height: 1rpx;
+          background-color: #486cdc;
+          opacity: 0.4;
+          transform: translateX(-50%);
+        }
+        .lis {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          z-index: 1;
+          &:before {
+            content: '';
+            display: block;
+            margin-bottom: 30rpx;
+            width: 22rpx;
+            height: 22rpx;
+            border-radius: 50%;
+            background: #fff;
+            box-sizing: border-box;
+            border: 6rpx solid #486cdc;
+          }
+          text {
+            font-size: 24rpx;
+            color: #353535;
+            line-height: 32rpx;
+          }
+        }
+      }
+    }
+    .reality-img {
+      background: #fff;
+      margin-bottom: 20rpx;
+      padding-bottom: 25rpx;
+      .img-list {
+        padding: 40rpx 40rpx 0;
+        overflow: hidden;
+        text {
+          font-size: 30rpx;
+          color: #353535;
+          display: block;
+          line-height: 42rpx;
+          margin-bottom: 44rpx;
+        }
+        .figure {
+          width: 100%;
+          margin-bottom: 44rpx;
+          image {
+            width: 100%;
+          }
+        }
+      }
+      .btn {
+        padding: 10rpx 0 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text {
+          font-size: 28rpx;
+          color: #486cdc;
+          line-height: 40rpx;
+          margin-right: 12rpx;
+          margin-bottom: 0;
+        }
+        .icon {
+          width: 26rpx;
+          height: 26rpx;
+          background: #486cdc;
+          border-radius: 50%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          &:before {
+            content: '';
+            display: block;
+            width: 10rpx;
+            height: 10rpx;
+            border-left: 1rpx solid #fff;
+            border-bottom: 1rpx solid #fff;
+            transform: rotate(-45deg) translate3d(25%, -25%, 0);
+            transform-origin: 50% 50%;
+          }
+        }
+      }
+    }
+    .car-source {
+      background-color: #fff;
+      .sources {
+        height: 100rpx;
+        border-bottom: 1rpx solid #e5e5e5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: row;
+        view {
+          flex: 1;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding-top: 20rpx;
+          box-sizing: border-box;
+          height: 100rpx;
+          &.selected {
+            text {
+              color: #486cdc;
+              font-weight: bold;
+              border-bottom: 4rpx solid #486cdc;
+            }
+          }
+          text {
+            font-size: 30rpx;
+            color: #888;
+            height: 80rpx;
+            line-height: 80rpx;
+            box-sizing: border-box;
+            display: inline-block;
+          }
+        }
+      }
+    }
+  }
+  .footer {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100rpx;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    box-sizing: border-box;
+    text,
+    button {
+      flex: 1;
+      box-sizing: border-box;
+      font-size: 34rpx;
+      text-align: center;
+      line-height: 100rpx;
+      color: #fff;
+      &.pay {
+        background: #ffb114;
+      }
+      &.sell {
+        background: #fb7530;
+        border: none;
+        border-radius: 0;
+        outline: none;
+      }
+    }
+  }
+}
+@keyframes buttonShow {
+  0% {
+    transform: translate3d(120rpx, 0, 0);
+  }
+  90% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+}
+@keyframes buttonText {
+  0% {
+    transform: scale(0.92);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(0.92);
+  }
+}
+</style>

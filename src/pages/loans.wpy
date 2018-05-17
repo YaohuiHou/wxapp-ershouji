@@ -1,0 +1,487 @@
+<template>
+  <view class="serve">
+    <scroll-view class="scroll-content" scroll-y>
+      <view class="head">
+        <image src="https://bbs.cehome.com/wxApp/v.2/loans.png"></image>
+      </view>
+      <view class="info">
+        <view class="header">
+          <text class="h2">{{detailHeader.equipment.brand}} {{detailHeader.equipment.model}} {{detailHeader.equipment.category}}</text>
+          <view class="ul">
+            <text wx:for="{{detailHeader.equipment.orderAttrbute}}" wx:key="{{index}}" wx:if="{{ index != '发布时间' }}">{{item}}</text>
+          </view>
+        </view>
+        <view class="price-view">
+          <view class="total">全价：<text>{{ detailHeader.equipment.price/10000 }}万</text></view>
+          <view class="switch">
+            <view @tap="monthChange" data-month="12"><text class="{{month == 12 ? 'selected' : ''}}">借款12期</text></view>
+            <view @tap="monthChange" data-month="18"><text class="{{month == 18 ? 'selected' : ''}}">借款18期</text></view>
+          </view>
+          <view class="start">首付款（{{scale}}%）</view>
+          <view class="start-price">{{startPrice}}万</view>
+          <text class="month">月供：{{priceMonth}}（{{ month }}期）</text>
+          <view class="stages">
+            <text class="h4">请选择您的借款额</text>
+            <view class="slider">
+              <text class="selected" style="left: {{selectLeft}}%;">{{needPrice}}万</text>
+              <slider
+                max="{{detailHeader.equipment.downPaymentStr}}"
+                value="{{sliderValue}}"
+                backgroundColor="#EFEFF4"
+                step="1"
+                activeColor="#486CDC"
+                block-size="20" block-color="#FB7530"
+                bindchanging="sliderChange"
+                bindchange="sliderChange"
+              />
+              <view class="price-area">
+                <text class="min-value">0万</text>
+                <text class="max-value">{{detailHeader.equipment.downPaymentStr}}万</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="process">
+        <text class="title">借款流程</text>
+        <view class="content">
+          <view class="item">
+            <view class="icon"></view>
+            <view class="some">
+              <text class="h5">提报材料</text>
+              <view>铁甲管家一对一全程协助提供资料</view>
+            </view>
+          </view>
+          <view class="item">
+            <view class="icon"></view>
+            <view class="some">
+              <text class="h5">客户面谈</text>
+              <view>资料提交完备后，信审人员面访核实</view>
+            </view>
+          </view>
+          <view class="item">
+            <view class="icon"></view>
+            <view class="some">
+              <text class="h5">急速审批</text>
+              <view>平均3小时完成审批</view>
+            </view>
+          </view>
+          <view class="item">
+            <view class="icon"></view>
+            <view class="some">
+              <text class="h5">放款提车</text>
+              <view>发放借款，铁甲管家协助过户提车</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="footer" @tap="callPhone">拨打{{callTel}} 借款购机</view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import mixins from '../mixins'
+
+export default class Index extends wepy.page {
+  config = {
+    navigationBarTitleText: '“购机贷”详情'
+  }
+  components = {}
+
+  mixins = [mixins]
+
+  data = {
+    eqId: 0,
+    // 配置信息
+    configs: null,
+    // 车信息
+    detailHeader: null,
+    // 月供
+    priceMonth: 6993,
+    // 分期
+    month: 12,
+    // 首付
+    startPrice: 0,
+    // 贷款金额
+    needPrice: 0,
+    // 首付比例
+    scale: 0,
+    // 进度条当前值
+    sliderValue: 0,
+    // 进度百分比
+    selectLeft: 100,
+    // 400电话
+    callTel: '400-688-6288'
+  }
+
+  methods = {
+    // 拖动
+    sliderChange(e) {
+      this.sliderValue = this.needPrice = e.detail.value
+      this.startPrice =
+        this.detailHeader.equipment.price / 10000 - this.needPrice
+      this.scale =
+        parseInt(this.needPrice / this.detailHeader.equipment.price / 10000) *
+        10
+
+      this.selectLeft =
+        this.sliderValue / this.detailHeader.equipment.downPaymentStr * 100
+      this.computeFun()
+    },
+    // 分期类型
+    monthChange(e) {
+      let target = e.currentTarget
+      this.month = target.dataset['month']
+      this.computeFun()
+    },
+    // 拨打电话
+    callPhone() {
+      wx.makePhoneCall({
+        phoneNumber: this.callTel
+      })
+    }
+  }
+
+  async onLoad(option) {
+    this.eqId = option.eqId
+    await this.detailHeaderFun()
+    await this.getConfig()
+  }
+
+  // 计算函数
+  //等额本息的计算公式 每月还款额=[贷款本金×(年利率/12)×（1+(年利率/12）^还款月数]÷[（1+(年利率/12））^还款月数－1]
+  //增加先息后本的月还公式 每月月还额=贷款本金*(年利率/12），还款期限中最后一个月的月还额=贷款本金+贷款本金*(年利率/12）
+  computeFun() {
+    // 年利率
+    let periodMonthInterest = JSON.parse(this.configs.periodMonthInterest)
+    let thisMonth =
+      periodMonthInterest[0].expect == this.month
+        ? periodMonthInterest[0].interest / this.month / 100
+        : periodMonthInterest[1].interest / this.month / 100
+    // 1等额本息 2先息后本
+    if (this.configs.paymentMethod == 1) {
+      this.priceMonth = Math.floor(
+        this.needPrice *
+          10000 *
+          thisMonth *
+          Math.pow(1 + thisMonth, this.month) /
+          (Math.pow(1 + thisMonth, this.month) - 1)
+      )
+    } else {
+      this.priceMonth = Math.floor(this.needPrice * 10000 * thisMonth)
+    }
+
+    this.$apply()
+  }
+
+  // 详情头
+  detailHeaderFun() {
+    wepy
+      .request({
+        url: `https://api2.tiebaobei.com/api/app/eqdetail/${
+          this.eqId
+        }?callback=1`
+      })
+      .then(res => {
+        let data = JSON.parse(res.data.substring(2, res.data.length - 1))
+        this.detailHeader = data
+
+        this.startPrice =
+          this.detailHeader.equipment.price / 10000 -
+          this.detailHeader.equipment.downPaymentStr
+
+        this.needPrice = this.sliderValue = this.detailHeader.equipment.downPaymentStr
+
+        this.$apply()
+      })
+  }
+  // 获取配置信息
+  getConfig() {
+    wepy
+      .request({
+        url: `https://api2.tiebaobei.com/api/app/finaceConfig/get`,
+        data: {
+          callback: 1,
+          eqId: this.eqId
+        }
+      })
+      .then(res => {
+        let data = JSON.parse(res.data.substring(2, res.data.length - 1))
+        if (data.ret == 0) {
+          this.configs = data.result
+
+          this.scale = this.configs.downPaymentRatioStart
+        }
+
+        this.$apply()
+        // 计算
+        this.computeFun()
+      })
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.serve {
+  background: #efeff4;
+  position: relative;
+  height: 100vh;
+  box-sizing: border-box;
+  padding-bottom: 100rpx;
+  overflow: hidden;
+  .scroll-content {
+    height: 100%;
+    position: relative;
+  }
+  .footer {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100rpx;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    background: #fb7530;
+    color: #fff;
+    font-size: 34rpx;
+    line-height: 100rpx;
+    text-align: center;
+    &:before {
+      content: '\e605';
+      display: block;
+      width: 32rpx;
+      height: 32rpx;
+      text-align: center;
+      line-height: 32rpx;
+      font-size: 32rpx;
+      color: #fff;
+      font-family: 'TieJia';
+      margin-right: 14rpx;
+    }
+  }
+  .head {
+    width: 100%;
+    image {
+      width: 100%;
+      vertical-align: top;
+    }
+  }
+  .info {
+    position: relative;
+    padding-top: 110rpx;
+    padding-bottom: 45rpx;
+    background-color: #fff;
+    margin-bottom: 20rpx;
+    .header {
+      position: absolute;
+      left: 50%;
+      top: -90rpx;
+      width: 650rpx;
+      height: 200rpx;
+      background: #ffffff;
+      box-shadow: 0 20rpx 27rpx 0 rgba(213, 213, 213, 0.3);
+      border-radius: 8rpx;
+      transform: translateX(-50%);
+      .h2 {
+        display: block;
+        padding: 40rpx 0 36rpx;
+        text-align: center;
+        font-size: 36rpx;
+        color: #353535;
+        line-height: 50rpx;
+        font-weight: bold;
+      }
+      .ul {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+        text {
+          font-size: 26rpx;
+          color: #888888;
+          text-align: center;
+          line-height: 36rpx;
+        }
+      }
+    }
+    .price-view {
+      padding-top: 52rpx;
+      .total {
+        display: block;
+        padding: 0 20rpx;
+        font-size: 28rpx;
+        color: #888888;
+        text-align: center;
+        line-height: 40rpx;
+        text-decoration: line-through;
+        text {
+          font-size: 28rpx;
+          color: #fb7530;
+        }
+      }
+      .switch {
+        padding-top: 22rpx;
+        border-bottom: 1rpx solid #e5e5e5;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        view {
+          flex: 1;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          text {
+            padding: 18rpx 0;
+            line-height: 42rpx;
+            font-size: 30rpx;
+            color: #888;
+            text-align: center;
+            box-sizing: border-box;
+            &.selected {
+              color: #486cdc;
+              border-bottom: 4rpx solid #486cdc;
+            }
+          }
+        }
+      }
+      .start {
+        font-size: 28rpx;
+        color: #353535;
+        display: block;
+        text-align: center;
+        line-height: 40rpx;
+        padding: 52rpx 0 16rpx;
+      }
+      .start-price {
+        display: block;
+        font-size: 70rpx;
+        color: #fb7530;
+        text-align: center;
+        line-height: 98rpx;
+        margin-bottom: 22rpx;
+        font-weight: bold;
+      }
+      .month {
+        display: block;
+        font-size: 28rpx;
+        color: #353535;
+        text-align: center;
+        margin-bottom: 72rpx;
+        line-height: 40rpx;
+      }
+      .stages {
+        .h4 {
+          display: block;
+          font-size: 30rpx;
+          color: #888888;
+          text-align: center;
+          line-height: 42rpx;
+        }
+        .slider {
+          margin: 0 50rpx;
+          padding-top: 48rpx;
+          position: relative;
+          .selected {
+            font-size: 34rpx;
+            color: #fb7530;
+            line-height: 48rpx;
+            height: 48rpx;
+            white-space: nowrap;
+            font-weight: bold;
+            position: absolute;
+            top: 0;
+            transform: translateX(-50%);
+          }
+          slider {
+            margin: 10rpx 0rpx;
+          }
+          .price-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-direction: row;
+            text {
+              font-size: 28rpx;
+              line-height: 40rpx;
+              color: #888888;
+            }
+          }
+        }
+      }
+    }
+  }
+  .process {
+    background-color: #fff;
+    padding-bottom: 40rpx;
+    .title {
+      padding-top: 30rpx;
+      display: block;
+      text-align: center;
+      line-height: 50rpx;
+      font-size: 36rpx;
+      color: #353535;
+      font-weight: bold;
+    }
+    .content {
+      padding: 66rpx 50rpx 0;
+      .item {
+        display: flex;
+        justify-content: flex-start;
+        padding-bottom: 54rpx;
+        position: relative;
+        &:before {
+          content: '';
+          position: absolute;
+          left: 11rpx;
+          top: 23rpx;
+          width: 1rpx;
+          height: 100%;
+          opacity: 0.4;
+          background: #486cdc;
+        }
+        &:last-child:before {
+          display: none;
+        }
+        .icon {
+          width: 22rpx;
+          height: 22rpx;
+          border-radius: 50% 50%;
+          background: #fff;
+          box-sizing: border-box;
+          border: 6rpx solid #486cdc;
+          margin-right: 40rpx;
+          margin-top: 11rpx;
+          position: relative;
+          z-index: 1;
+        }
+        .some {
+          width: calc(~'100% - 62rpx');
+          text,
+          view {
+            display: block;
+            font-size: 28rpx;
+            color: #888;
+            line-height: 44rpx;
+            &.tel {
+              color: #486cdc;
+              display: inline;
+            }
+          }
+          .h5 {
+            font-size: 32rpx;
+            color: #353535;
+            padding-bottom: 6rpx;
+            font-weight: 500;
+          }
+        }
+      }
+    }
+  }
+}
+</style>

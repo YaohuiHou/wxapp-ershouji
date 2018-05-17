@@ -1,0 +1,89 @@
+<style lang="less">
+.container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+@font-face {
+  font-family: 'TieJia'; /* project id 650544 */
+  src: url('//at.alicdn.com/t/font_650544_1hkgrom9sae5ewmi.eot');
+  src: url('//at.alicdn.com/t/font_650544_1hkgrom9sae5ewmi.eot?#iefix')
+      format('embedded-opentype'),
+    url('//at.alicdn.com/t/font_650544_1hkgrom9sae5ewmi.woff') format('woff'),
+    url('//at.alicdn.com/t/font_650544_1hkgrom9sae5ewmi.ttf') format('truetype'),
+    url('//at.alicdn.com/t/font_650544_1hkgrom9sae5ewmi.svg#iconfont')
+      format('svg');
+}
+</style>
+
+<script>
+// require('./utils/sensorsdata.js')
+import wepy from 'wepy'
+import 'wepy-async-function'
+// require('./utils/sensorsdata.js')
+
+export default class extends wepy.app {
+  config = {
+    pages: [
+      'pages/index',
+      'pages/detail',
+      'pages/serve',
+      'pages/screen',
+      'pages/loans',
+      'pages/city'
+    ],
+    window: {
+      backgroundTextStyle: 'light',
+      navigationBarBackgroundColor: '#fff',
+      navigationBarTitleText: '铁甲二手机',
+      navigationBarTextStyle: 'black'
+    }
+  }
+
+  globalData = {
+    userInfo: null
+  }
+
+  constructor() {
+    super()
+    this.use('requestfix')
+    this.use('promisify')
+  }
+
+  onLaunch() {
+    this.testAsync()
+    // let SA = getApp()
+    // console.log(SA.store.getDistinctId())
+  }
+
+  sleep(s) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve('promise resolved')
+      }, s * 1000)
+    })
+  }
+
+  async testAsync() {
+    const data = await this.sleep(3)
+    console.log(data)
+  }
+
+  getUserInfo(cb) {
+    const that = this
+    if (this.globalData.userInfo) {
+      return this.globalData.userInfo
+    }
+    wepy.getUserInfo({
+      success(res) {
+        that.globalData.userInfo = res.userInfo
+        cb && cb(res.userInfo)
+      }
+    })
+  }
+}
+</script>

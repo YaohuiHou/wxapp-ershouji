@@ -1,0 +1,149 @@
+<template>
+  <view class="screen">
+    <view class="head">
+      <input type="text" placeholder="搜索" focus confirm-type="search" value="{{screenVal}}" 
+        bindconfirm="screenFun"
+      ></input>
+      <text class="btn" @tap="goback">取消</text>
+    </view>
+    <view class="content">
+      <text class="title" wx:if="{{ screenArr.length }}">最近搜索</text>
+      <view class="list">
+        <text wx:for="{{screenArr}}" wx:key="{{index}}" @tap="screenItem({{index}})">{{item}}</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import mixins from '../mixins'
+import screenHeader from '../components/screen'
+
+export default class Index extends wepy.page {
+  config = {
+    navigationBarTitleText: '铁甲二手机'
+  }
+  components = {
+    screenHeader
+  }
+
+  mixins = [mixins]
+
+  data = {
+    // 近期搜索
+    screenArr: [],
+    screenVal: ''
+  }
+
+  onShow() {
+    // 获取搜索记录
+    wx.getStorage({
+      key: 'screenArr',
+      success: res => {
+        console.log(res)
+        this.screenArr = JSON.parse(res.data)
+        this.$apply()
+      }
+    })
+    // 搜索信息
+    wx.getStorage({
+      key: 'screenVal',
+      success: res => {
+        console.log(res, '数值')
+        if (res.data) {
+          this.screenVal = res.data
+          this.$apply()
+        }
+      }
+    })
+  }
+  methods = {
+    // 输入完毕，点击搜索
+    screenFun(e) {
+      this.screenArr.unshift(e.detail.value)
+      this.setScreenData(e.detail.value)
+    },
+    screenItem(index) {
+      let me = this.screenArr.splice(index, 1)
+      this.screenArr = [me, ...this.screenArr]
+      this.setScreenData(me[0])
+    },
+    // 返回
+    goback() {
+      wx.navigateBack({
+        delta: 1
+      })
+    }
+  }
+
+  // 数据存储
+  async setScreenData(val) {
+    await wx.setStorage({
+      key: 'screenArr',
+      data: JSON.stringify(this.screenArr)
+    })
+    await wx.setStorage({
+      key: 'screenVal',
+      data: val
+    })
+    wx.navigateBack({
+      delta: 1
+    })
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.screen {
+  background-color: #fff;
+  .head {
+    background: #efeff4;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 12rpx 0 12rpx 40rpx;
+    input {
+      flex: 1;
+      height: 64rpx;
+      line-height: 64rpx;
+      text-align: center;
+      font-size: 28rpx;
+      color: #888;
+      background: #ffffff;
+      border-radius: 8rpx;
+    }
+    .btn {
+      width: 132rpx;
+      height: 64rpx;
+      line-height: 64rpx;
+      text-align: center;
+      font-size: 28rpx;
+      color: #353535;
+    }
+  }
+  .content {
+    padding: 0 40rpx;
+    .title {
+      display: block;
+      font-size: 30rpx;
+      color: #353535;
+      padding: 35rpx 0;
+    }
+    .list {
+      display: flex;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      text {
+        background: #efeff4;
+        border-radius: 4rpx;
+        font-size: 26rpx;
+        color: #353535;
+        padding: 0 18rpx;
+        line-height: 68rpx;
+        margin: 0 24rpx 24rpx 0;
+      }
+    }
+  }
+}
+</style>
