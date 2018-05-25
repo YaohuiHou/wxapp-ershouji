@@ -89,6 +89,7 @@ export default class Index extends wepy.component {
     // 固定参数选择
     selectFun(index) {
       this.startArr[index].select = !this.startArr[index].select
+
       // 删除输入关键字
       if (this.startArr[index].id == 2) {
         if (this.startArr[index].select) {
@@ -99,6 +100,7 @@ export default class Index extends wepy.component {
           })
           delete this.newSelect.keyword
         } else {
+          this.submitData.keyword = ''
           wx.removeStorage({
             key: 'screenVal'
           })
@@ -113,13 +115,25 @@ export default class Index extends wepy.component {
       }
 
       this.$apply()
+      this.$emit('getList', 1)
     },
     // 增删参数
     selectListFun(index) {
       delete this.newSelect[index]
-
-      this.submitData[index] = ''
+      if (index == 'typeMode') {
+        this.submitData.categoryId = '' // 机型id
+        this.submitData.secondCategoryId = '' // 二级机型id
+      } else {
+        this.submitData[index] = ''
+      }
+      if (index == 'keyword') {
+        wx.removeStorage({
+          key: 'screenVal'
+        })
+      }
       this.$apply()
+      this.$emit('delete', index)
+      // this.$emit('getList', 1)
     }
   }
   onShow() {}

@@ -1,5 +1,5 @@
 <template>
-  <view class="view" wx:if="{{typeMode}}">
+  <view class="view" hidden="{{!typeMode}}">
     <view class="type">
       <view class="head">选择机型</view>
       <scroll-view scroll-y class="scroll-view">
@@ -27,7 +27,7 @@
 <script>
 import wepy from 'wepy'
 import mixin from '../mixins'
-export default class Index extends wepy.component {
+export default class typeMode extends wepy.component {
   props = {
     typeMode: {
       type: Boolean,
@@ -49,6 +49,7 @@ export default class Index extends wepy.component {
     startSelectItem: null
   }
   mixins = [mixin]
+
   methods = {
     // 关闭
     toastMask() {
@@ -60,21 +61,24 @@ export default class Index extends wepy.component {
       this.typeModeList[item.id].select = !this.typeModeList[item.id].select
     },
     // 选中
-    async changeItem(item) {
-      await this.typeModeList[item.categoryId].childrens.forEach(ele => {
+    changeItem(item) {
+      wx.showLoading({
+        title: '数据加载中...'
+      })
+      this.typeModeList[item.categoryId].childrens.forEach(ele => {
         if (ele.id === item.id) {
           ele.select = true
         }
       })
       // 判断之前数据
       if (this.startSelectItem) {
-        await this.typeModeList[
-          this.startSelectItem.categoryId
-        ].childrens.forEach(ele => {
-          if (ele.id === this.startSelectItem.id) {
-            ele.selected = false
+        this.typeModeList[this.startSelectItem.categoryId].childrens.forEach(
+          ele => {
+            if (ele.id == this.startSelectItem.id) {
+              ele.select = false
+            }
           }
-        })
+        )
       }
       // 将选中数据存储
       this.startSelectItem = item
@@ -83,46 +87,79 @@ export default class Index extends wepy.component {
       this.submitData.secondCategoryId = item.id
       this.typeModeData = item
       this.$apply()
+      this.$emit('delete', null)
     }
   }
   onLoad() {
     this.$nextTick(() => {
-      wepy
-        .request({
-          url: `${this.host}wx/getCategoryList`,
-          data: {
-            callback: 1,
-            brandId: this.submitData.brandId
-          }
-        })
-        .then(res => {
-          let data = JSON.parse(res.data.substring(2, res.data.length - 1))
-          if (data.ret == 0) {
-            let arr = data.result
-            let newArr = {}
-            arr.forEach((ele, index) => {
-              if (ele.categoryId < 0) {
-                newArr[ele.id] = ele
-              } else {
-                if (!newArr[ele.categoryId].childrens) {
-                  newArr[ele.categoryId].childrens = []
-                }
-                newArr[ele.categoryId].childrens = [
-                  ...newArr[ele.categoryId].childrens,
-                  ele
-                ]
+      wx.getStorageInfo({
+        success: res => {
+          let storage = res.keys
+          if (storage.indexOf('typeModeList') != -1) {
+            wx.getStorage({
+              key: 'typeModeList',
+              success: res => {
+                this.typeModeList = JSON.parse(res.data)
               }
             })
-            this.typeModeList = newArr
-            console.log(this.typeModeList)
-
-            this.$apply()
+          } else {
+            this.getTypeModeList()
           }
-        })
+        }
+      })
     })
   }
-  onShow() {
-    console.log(12)
+
+  // 获取数据
+  getTypeModeList() {
+    wepy
+      .request({
+        url: `${this.host}wx/getCategoryList`,
+        data: {
+          callback: 1,
+          brandId: this.submitData.brandId
+        }
+      })
+      .then(res => {
+        let data = JSON.parse(res.data.substring(2, res.data.length - 1))
+        if (data.ret == 0) {
+          let arr = data.result
+          let newArr = {}
+          arr.forEach((ele, index) => {
+            if (ele.categoryId < 0) {
+              newArr[ele.id] = ele
+            } else {
+              if (!newArr[ele.categoryId].childrens) {
+                newArr[ele.categoryId].childrens = []
+              }
+              newArr[ele.categoryId].childrens = [
+                ...newArr[ele.categoryId].childrens,
+                ele
+              ]
+            }
+          })
+          this.typeModeList = newArr
+          wx.setStorage({
+            key: 'typeModeList',
+            data: JSON.stringify(this.typeModeList)
+          })
+          this.$apply()
+        }
+      })
+  }
+
+  // 筛选
+  changeItemSelectFun() {
+    // 判断之前数据
+    if (this.startSelectItem) {
+      this.typeModeList[this.startSelectItem.categoryId].childrens.forEach(
+        ele => {
+          if (ele.id == this.startSelectItem.id) {
+            ele.select = false
+          }
+        }
+      )
+    }
   }
 }
 </script>

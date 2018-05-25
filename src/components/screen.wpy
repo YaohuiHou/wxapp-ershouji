@@ -86,8 +86,9 @@ export default class Index extends wepy.component {
       display: flex;
       flex-direction: row;
       align-items: center;
-      min-width: 130rpx;
+      min-width: 85rpx;
       max-width: 200rpx;
+      height: 88rpx;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
@@ -151,6 +152,8 @@ export default class Index extends wepy.component {
       font-size: 28rpx;
       color: #353535;
       text-align: center;
+      height: 80rpx;
+      line-height: 80rpx;
       &:after {
         content: '';
         display: block;

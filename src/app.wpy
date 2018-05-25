@@ -7,24 +7,24 @@
   justify-content: space-between;
   box-sizing: border-box;
 }
-
 @font-face {
   font-family: 'TieJia'; /* project id 650544 */
-  src: url('//at.alicdn.com/t/font_650544_1hkgrom9sae5ewmi.eot');
-  src: url('//at.alicdn.com/t/font_650544_1hkgrom9sae5ewmi.eot?#iefix')
+  src: url('//at.alicdn.com/t/font_650544_ia2damzotuvdkj4i.eot');
+  src: url('//at.alicdn.com/t/font_650544_ia2damzotuvdkj4i.eot?#iefix')
       format('embedded-opentype'),
-    url('//at.alicdn.com/t/font_650544_1hkgrom9sae5ewmi.woff') format('woff'),
-    url('//at.alicdn.com/t/font_650544_1hkgrom9sae5ewmi.ttf') format('truetype'),
-    url('//at.alicdn.com/t/font_650544_1hkgrom9sae5ewmi.svg#iconfont')
+    url('//at.alicdn.com/t/font_650544_ia2damzotuvdkj4i.woff') format('woff'),
+    url('//at.alicdn.com/t/font_650544_ia2damzotuvdkj4i.ttf') format('truetype'),
+    url('//at.alicdn.com/t/font_650544_ia2damzotuvdkj4i.svg#iconfont')
       format('svg');
 }
 </style>
 
 <script>
 // require('./utils/sensorsdata.js')
+const ALD = require('./utils/ald-stat.js')
+const SA = require('./utils/sensorsdata.js')
 import wepy from 'wepy'
 import 'wepy-async-function'
-// require('./utils/sensorsdata.js')
 
 export default class extends wepy.app {
   config = {
@@ -41,7 +41,13 @@ export default class extends wepy.app {
       navigationBarBackgroundColor: '#fff',
       navigationBarTitleText: '铁甲二手机',
       navigationBarTextStyle: 'black'
-    }
+    },
+    widgets: [
+      {
+        type: 'search',
+        path: 'pages/index'
+      }
+    ]
   }
 
   globalData = {
@@ -53,11 +59,33 @@ export default class extends wepy.app {
     this.use('requestfix')
     this.use('promisify')
   }
-
-  onLaunch() {
+  onLaunch(option) {
+    this.sceneFun(option)
     this.testAsync()
-    // let SA = getApp()
-    // console.log(SA.store.getDistinctId())
+  }
+  onShow() {
+    // 公共属性
+    // SA.register({
+    //   app_name: '二手机小程序',
+    //   app_version: '2.0'
+    // })
+  }
+
+  // 场景值
+  sceneFun(option) {
+    try {
+      if (option.scene === 1023) {
+        wepy.setStorageSync('sceneText', 'scene1023')
+      } else {
+        wx.getSystemInfo({
+          success: function(res) {
+            if (res.model.indexOf('iPhone') != -1) {
+              wepy.setStorageSync('sceneText', 'scene1023')
+            }
+          }
+        })
+      }
+    } catch (error) {}
   }
 
   sleep(s) {

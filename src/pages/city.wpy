@@ -5,6 +5,12 @@
         <text class="em">当前定位城市</text>
         <text class="span location">{{city.name}}</text>
       </view>
+      <view  class="li" wx:if="{{city.id}}">
+        <text class="em">全部</text>
+        <view class="cities">
+          <text class="span" @tap="cityChange({{allCity}})">{{allCity.name}}</text>
+        </view>
+      </view>
       <block wx:for="{{content}}" wx:key="{{index}}">
         <view  class="li" id="{{index}}">
           <text class="em">{{index}}</text>
@@ -17,15 +23,17 @@
     <!-- 选中的弹窗样式 -->
     <view class="scale" hidden="{{navInfoShow}}">{{navArr[navIndex]}}</view>
     <!-- 字母导航 -->
-    <view class="nav" @touchmove="indexNavMove" @touchend="indexNavEnd">
-      <view 
-        class="{{[ navArr[index] === navInfo ? 'text selected' : 'text']}}"
-        @tap="indexNav({{index}})" id="{{navArr[index]}}"
-        wx:for="{{navArr}}"
-        wx:key="navArr"
-        data-number="{{index}}"
-      >{{item}}</view>
-    </view>
+    <!-- <view class="nav-view"> -->
+      <view class="nav" catch:touchmove="indexNavmoveFun" catch:touchend="indexNavEndFun">
+        <view 
+          class="{{[ navArr[index] === navInfo ? 'text selected' : 'text']}}"
+          @tap="indexNav({{index}})" id="{{navArr[index]}}"
+          wx:for="{{navArr}}"
+          wx:key="navArr"
+          data-number="{{index}}"
+        >{{item}}</view>
+      </view>
+    <!-- </view> -->
   </view>
 </template>
 
@@ -43,21 +51,21 @@ export default class Index extends wepy.page {
     navInfo: '',
     navIndex: 0,
     navInfoShow: true,
-    scrollAnimation: true,
+    scrollAnimation: false,
     city: {},
     content: {},
     // 请求得到城市列表
-    cityList: []
+    cityList: [],
+    allCity: {
+      name: '全国',
+      id: '',
+      level: 2
+    }
   }
   mixins = [mixin]
   async onLoad() {
     wx.showLoading({
       title: '玩命加载中...'
-    })
-    this.$nextTick(() => {
-      setTimeout(() => {
-        wx.hideLoading()
-      }, 1e3)
     })
 
     // 获取城市列表
@@ -72,7 +80,11 @@ export default class Index extends wepy.page {
           // 序列
           this.navArr = Object.keys(data).sort()
           this.$apply()
+          wx.hideLoading()
         }
+      },
+      fail: res => {
+        console.log(res)
       }
     })
 
@@ -83,61 +95,78 @@ export default class Index extends wepy.page {
         let data = JSON.parse(res.data)
         this.city = data
         this.$apply()
+      },
+      fail: res => {
+        this.city = this.allCity
+        this.$apply()
       }
     })
   }
   onShow() {}
   methods = {
     async cityChange(item) {
+      // 删掉搜索内容
+      wx.removeStorage({
+        key: 'screenVal'
+      })
+
       // 替换选中城市
+      item.from = 'city'
       await wx.setStorage({
         key: 'cityObj',
         data: JSON.stringify(item)
       })
 
       // 返回
-      await wx.reLaunch({
-        url: 'index'
+      // await wx.reLaunch({
+      //   url: 'index'
+      // })
+      await wx.navigateBack({
+        delta: 1
       })
     },
-    //导航栏
-    indexNavmove(e) {
+    // 导航栏
+    indexNavmoveFun(e) {
+      // 22
       let num = e.target.dataset.number
       let top = e.target.offsetTop
-      let index = this.navArr[
-        Math.floor(
-          (e.changedTouches[0].pageY - e.currentTarget.offsetTop) / (top / num)
-        )
-      ]
+      let index = Math.floor(
+        (e.changedTouches[0].pageY - e.currentTarget.offsetTop) / (top / num)
+      )
 
       if (index === this.navIndex) {
         return
-      } else {
-        this.navIndex = index
-        this.navInfo = this.navArr[index]
-        this.navInfoShow = false
       }
-      this.$apply()
-    },
-    indexNavEnd(e) {
-      let time = setTimeout(() => {
-        this.navInfoShow = true
-        this.$apply()
-        clearTimeout(time)
-      }, 1000)
-    },
-    // 导航点击
-    indexNav(index) {
-      this.scrollAnimation = true
       this.navIndex = index
       this.navInfo = this.navArr[index]
       this.navInfoShow = false
+      this.scrollAnimation = false
+
+      this.$apply()
+    },
+    indexNavEndFun(e) {
+      let time = setTimeout(() => {
+        this.navInfoShow = true
+        this.scrollAnimation = true
+
+        this.$apply()
+        clearTimeout(time)
+      }, 500)
+    },
+    // 导航点击
+    indexNav(index) {
+      this.scrollAnimation = false
+      this.navIndex = index
+      this.navInfo = this.navArr[index]
+      this.navInfoShow = false
+      this.$apply()
 
       let time = setTimeout(() => {
         this.navInfoShow = true
+        this.scrollAnimation = false
         this.$apply()
         clearTimeout(time)
-      }, 1000)
+      }, 500)
     }
   }
 
@@ -175,7 +204,9 @@ export default class Index extends wepy.page {
     this.content = sortObj
     // 序列
     this.navArr = Object.keys(sortObj).sort()
+
     this.$apply()
+    wx.hideLoading()
     wx.setStorage({
       key: 'citiesList',
       data: JSON.stringify(sortObj)
@@ -195,8 +226,7 @@ export default class Index extends wepy.page {
 .nav {
   position: fixed;
   right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  bottom: 120rpx;
 }
 .nav .text {
   display: block;

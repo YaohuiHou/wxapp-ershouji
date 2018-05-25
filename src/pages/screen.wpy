@@ -9,8 +9,11 @@
     <view class="content">
       <text class="title" wx:if="{{ screenArr.length }}">最近搜索</text>
       <view class="list">
-        <text wx:for="{{screenArr}}" wx:key="{{index}}" @tap="screenItem({{index}})">{{item}}</text>
+        <text wx:for="{{screenArr}}" wx:key="{{index}}" wx:if="{{index < 10}}" @tap="screenItem({{index}})">{{item}}</text>
       </view>
+    </view>
+    <view class="delete" @tap="deleteScreeenList" wx:if="{{screenArr.length}}">
+      <text>清除搜索记录</text>
     </view>
   </view>
 </template>
@@ -41,8 +44,8 @@ export default class Index extends wepy.page {
     wx.getStorage({
       key: 'screenArr',
       success: res => {
-        console.log(res)
         this.screenArr = JSON.parse(res.data)
+        console.log(this.screenArr)
         this.$apply()
       }
     })
@@ -50,7 +53,6 @@ export default class Index extends wepy.page {
     wx.getStorage({
       key: 'screenVal',
       success: res => {
-        console.log(res, '数值')
         if (res.data) {
           this.screenVal = res.data
           this.$apply()
@@ -61,13 +63,27 @@ export default class Index extends wepy.page {
   methods = {
     // 输入完毕，点击搜索
     screenFun(e) {
-      this.screenArr.unshift(e.detail.value)
-      this.setScreenData(e.detail.value)
+      if (e.detail.value.trim().length > 0) {
+        this.screenArr.unshift(e.detail.value)
+        this.setScreenData(e.detail.value)
+      }
     },
     screenItem(index) {
       let me = this.screenArr.splice(index, 1)
-      this.screenArr = [me, ...this.screenArr]
+      this.screenArr = [...me, ...this.screenArr]
+
       this.setScreenData(me[0])
+    },
+    // 清除搜索记录
+    deleteScreeenList() {
+      this.screenArr = []
+      this.$apply()
+      wx.removeStorage({
+        key: 'screenArr'
+      })
+      wx.removeStorage({
+        key: 'screenVal'
+      })
     },
     // 返回
     goback() {
@@ -143,6 +159,25 @@ export default class Index extends wepy.page {
         line-height: 68rpx;
         margin: 0 24rpx 24rpx 0;
       }
+    }
+  }
+  .delete {
+    height: 100rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20rpx;
+    text {
+      font-size: 28rpx;
+      color: #888888;
+    }
+    &:before {
+      content: '\e601';
+      font-family: 'TieJia';
+      display: block;
+      font-size: 28rpx;
+      color: #888888;
+      margin-right: 10rpx;
     }
   }
 }

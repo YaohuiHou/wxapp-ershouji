@@ -1,5 +1,5 @@
 <template>
-  <view class="view" hidden="{{toastShow}}">
+  <view style="display:{{toastShowHidden}}" class="view">
     <view class="toast">
       <view class="header">
         <text>{{toastContent.toastHeader}}</text>
@@ -30,16 +30,19 @@ export default class Index extends wepy.component {
   props = {
     toastShow: {
       type: Boolean,
-      default: false,
       twoWay: true
     },
     toastContent: Object,
     brandeqId: {
       default: '',
       twoWay: true
+    },
+    EQData: {
+      twoWay: false
     }
   }
   data = {
+    toastShowHidden: 'none',
     // 提示文案
     toastHeader: '我要买设备',
     // 按钮文案
@@ -58,16 +61,27 @@ export default class Index extends wepy.component {
     verifyMsg: '',
     // 提交数据
     submitData: {
-      customerNumber: '', //用户号码
-      uniqueSymbol: 'wx_tiebaobei_app', //唯一标识（传一个你自己定义的唯一的标识就行, 参考我们自己的m站传的是sc_uniqueSymbol）
-      eqId: 0, //设备id:
-      channel: 8, //渠道 传8
+      customerNumber: '', // 用户号码
+      uniqueSymbol: 'wx_tiebaobei_app', // 唯一标识（传一个你自己定义的唯一的标识就行, 参考我们自己的m站传的是sc_uniqueSymbol）
+      eqId: 0, // 设备id:
+      channel: 8, // 渠道 传8
       transferNumber: '',
       pageFromType: '',
       hotlineShare: '',
       currentUserWorkPhone: '',
-      distinctId: '', //设备标识
-      code: '' //有验证码，传验证码
+      distinctId: '', // 设备标识
+      code: '' // 有验证码，传验证码
+    }
+  }
+
+  watch = {
+    toastShow(n, o) {
+      if (!n) {
+        this.toastShowHidden = 'block'
+      } else {
+        this.toastShowHidden = 'none'
+      }
+      this.$apply()
     }
   }
   mixins = [mixin]
@@ -108,6 +122,7 @@ export default class Index extends wepy.component {
     // 关闭
     toastMask() {
       this.toastShow = true
+      this.toastShowHidden = 'none'
       this.$apply()
     },
     // 提交手机号码
@@ -119,9 +134,11 @@ export default class Index extends wepy.component {
       ) {
         this.error = false
         // 提交信息
+        this.submitData.distinctId = this.distinctId
         this.submitData.customerNumber = this.telPhone
         this.submitData.eqId = this.brandeqId
-        if (this.submitDisable) true
+        this.submitData.pageFromType = this.toastContent.pageFromType
+        if (this.submitDisable) return
         this.submitDisable = true
         // 提交ajax
         /*
@@ -137,19 +154,21 @@ export default class Index extends wepy.component {
             data: this.submitData
           })
           .then(res => {
-            console.log(res)
             this.submitDisable = false
             switch (res.data.ret) {
-              case 0:
+              case '0':
                 this.toastShow = true
                 wx.showToast({
                   title: '提交成功！',
                   icon: 'success',
                   duration: 2000
                 })
+                let me = this.EQData
+                me.buyer_mobile = this.telPhone
+                // this.setSensorsData('E28', me)
                 break
-              case 1104:
-              case 1105:
+              case '1104':
+              case '1105':
                 this.toastShow = true
                 wx.showToast({
                   title: res.data.msg,
@@ -157,19 +176,20 @@ export default class Index extends wepy.component {
                   duration: 2000
                 })
                 break
-              case 1106:
+              case '1106':
                 this.verifyCode = true
                 break
-              case 1107:
+              case '1107':
                 this.verifyError = true
                 this.verifyMsg = '手机验证码错误'
                 break
             }
+            this.$apply()
           })
           .catch(err => {
             this.submitDisable = false
+            this.$apply()
           })
-        this.$apply()
       } else {
         // 错误提示 + 震动
         this.error = true
@@ -188,6 +208,7 @@ export default class Index extends wepy.component {
   right: 0;
   bottom: 0;
   z-index: 100;
+  display: none;
   .mask {
     position: absolute;
     left: 0;
@@ -203,7 +224,7 @@ export default class Index extends wepy.component {
     left: 50%;
     top: 50%;
     width: 594rpx;
-    transform: translate3d(-50%, -50%, 0);
+    transform: translate3d(-50%, -70%, 0);
     background-color: #fff;
     z-index: 1;
     border-radius: 10px;
@@ -355,7 +376,7 @@ export default class Index extends wepy.component {
       line-height: 44px;
       text-align: center;
       border: none;
-      transition: background 0.5s linear;
+      transition: background 0.7s linear;
       &.disabled {
         opacity: 0.4;
       }

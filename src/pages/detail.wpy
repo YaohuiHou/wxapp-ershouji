@@ -4,17 +4,17 @@
       <!-- 轮播 -->
       <view class="swiper">
         <view class="page">
-          {{current}}/{{detailHeader.eqphotoList.length}}
+          {{current}}/{{detailHeader.eqphotoList.length ? detailHeader.eqphotoList.length : 0 }}
         </view>
         <!-- 编码 -->
-        <view class="code">编号:{{detailHeader.eqphotoList[current-1].imgId}}</view>
+        <view class="code">编号:{{detailHeader.equipment.id ? detailHeader.equipment.id : 0}}</view>
         <swiper indicator-dots="{{indicatorDots}}"
           bindchange="current"
           circular autoplay interval="2000" duration="800"
         >
           <block wx:for="{{detailHeader.eqphotoList}}" wx:key="{{index}}">
             <swiper-item>
-              <image src="{{item.imgPathDto.pathMid}}" class="slide-image"/>
+              <image @tap="showImgList({{item.imgPathDto.pathMid}})" lazy-load mode="aspectFill" src="{{item.imgPathDto.pathMid}}" class="slide-image"/>
             </swiper-item>
           </block>
         </swiper>
@@ -30,12 +30,12 @@
         </view>
         <view class="price">
           <view class="price-hint">
-            <view>{{ detailHeader.equipment.price/10000 }}<text>万</text></view>
+            <view wx:if="{{detailHeader.equipment.price}}">{{ detailHeader.equipment.price/10000 }}<text>万</text></view>
             <!-- 降价信息 -->
             <text wx:if="{{detailHeader.equipment.reducedPriceStr}}">（已降价{{detailHeader.equipment.reducedPriceStr}}俯）</text>
           </view>
           <text wx:if="{{detailHeader.equipment.downPaymentStr}}">首付{{detailHeader.equipment.downPaymentStr}}万</text>
-          <view class="btn" @tap="telToast">
+          <view class="btn" @tap="telToast(1)">
             <text>询底价</text>
           </view>
         </view>
@@ -49,8 +49,8 @@
         </navigator>
       </view>
       <!-- 铁甲保 -->
-      <view class="tiejia">
-        <view class="gradient">
+      <view class="tiejia" wx:if="{{ detailHeader.equipment.tjInsurance  == 2 && detailHeader.equipment.managerRecommend == 1}}">
+        <view class="gradient" wx:if="{{ detailHeader.equipment.tjInsurance  == 2 }}">
           <view class="ensure">
             <view class="h3">
               <text>铁甲保认证</text>
@@ -62,7 +62,7 @@
             </navigator>
           </view>
         </view>
-        <view class="gradient">
+        <view class="gradient" wx:if="{{detailHeader.equipment.managerRecommend == 1}}">
           <view class="ensure">
             <view class="h3">
               <text>管家合影认证</text>
@@ -76,7 +76,7 @@
       <view class="facility">
         <text class="title">设备介绍</text>
         <view class="ul-list">
-          <view class="li-item" wx:for="{{detailHeader.equipment.orderAttrbute}}" wx:key="{{index}}" wx:if="{{ index != '发布时间' }}">
+          <view class="li-item" wx:for="{{detailHeader.equipment.orderAttrbute}}" wx:key="{{index}}" wx:if="{{  index == '出厂时间' || index == '小时数' || index == '停放地点' }}">
             <text class="span">{{item}}</text>
             <text class="em">{{index}}</text>
           </view>
@@ -93,16 +93,17 @@
             <text class="name">您的管家-{{detailManInfo.realname}}</text>
             <text class="some">{{detailManInfo.extendsInfo}}</text>
           </view>
-          <button plain data-phone="{{detailManInfo.workMobile}}" @tap="callPhone">联系管家</button>
+          <button plain data-phone="{{detailManInfo.workMobile}}" @tap="telToast(2)">联系管家</button>
         </view>
         <text class="describe">{{detailManInfo.remark}}</text>
-        <view class="promise">
+        <view class="promise" wx:if="{{ detailHeader.equipment.tjInsurance == 2 }}">
           <view class="warn">
             <icon type="warn" size="12"></icon>
-            <text>以上信息不真实，铁甲承诺无条件赔付</text>
+            <text>若以上信息不真实，铁甲承诺无条件赔付</text>
           </view>
           <view class="hint-list">
-            <view class="hint-li" wx:for="{{belive}}" wx:key="{{index}}">
+            <!-- "isIncident": 0, "isFire": 0, "isWater": 0, -->
+            <view class="hint-li" wx:for="{{belive}}" wx:key="{{index}}" wx:if="{{detailHeader.equipment[item.type] == 0}}">
               <view class="figure">
                 <image src="{{item.img}}"></image>
               </view>
@@ -120,7 +121,7 @@
             <text class="name">{{detailHomeManInfo.realName}}</text>
             <text class="some">{{detailHomeManInfo.extendsInfo}}</text>
           </view>
-          <button plain data-phone="{{detailHomeManInfo.username}}" @tap="telToast">联系卖家</button>
+          <button plain data-phone="{{detailHomeManInfo.username}}" @tap="telToast(3)">咨询设备</button>
         </view>
         <text class="describe">{{detailHeader.equipment.des}}</text>
       </view>
@@ -153,7 +154,7 @@
           <block wx:for="{{showImgsList}}" wx:key="{{index}}">
             <text>{{item.name}}</text>
             <view class="figure" wx:for="{{item.imgs}}" wx:key="{{index}}">
-              <image src="{{item}}"></image>
+              <image  @tap="showImgList({{item}})" lazy-load mode="widthFix" src="{{item}}"></image>
             </view>
           </block>
         </view>
@@ -165,25 +166,28 @@
       <!-- 车源 -->
       <view class="car-source">
         <view class="sources">
-          <view class="{{goodBrand ? '' : 'selected'}}" data-id="0" id="0" @tap="goodOrBrand">
+          <view class="{{goodBrand == 1 ? '' : 'selected'}}" data-id="0" id="0" @tap="goodOrBrand(0)">
             <text>优质车源</text>
           </view>
-          <view class="{{goodBrand ? 'selected' : ''}}" data-id="1" id="1" @tap="goodOrBrand">
+          <view class="{{goodBrand == 1 ? 'selected' : ''}}" data-id="1" id="1" @tap="goodOrBrand(1)">
             <text>同品牌车源</text>
           </view>
         </view>
-        <view class="car-list">
-          <view class="car-item">
-            <repeat for="{{repeatItemList}}" key="index" index="index" item="item">
-              <listItem :item="item"></listItem>
-            </repeat>
+        <block wx:for="{{repeatItemList}}" wx:key="{{index}}">
+          <view class="car-list" data-id="{{item.id}}" hidden="{{item.id != goodBrand ? true : false}}">
+            <view class="car-item">
+              <repeat for="{{item.list}}" key="index" index="index" item="item">
+                <listItem :item="item"></listItem>
+              </repeat>
+            </view>
           </view>
-        </view>
+        </block>
+        
       </view>
     </scroll-view>
     <view class="footer">
-      <text class="pay" @tap="telToast">马上询价</text>
-      <button open-type="share" class="sell">找人看值不值</button>
+      <text class="pay" @tap="telToast(4)">马上询价</text>
+      <button open-type="share" plain class="sell">找人看值不值</button>
     </view>
     <!-- 电话弹窗 -->
     <toastView
@@ -212,11 +216,12 @@ export default class Index extends wepy.page {
   }
 
   mixins = [mixins]
-
   data = {
+    goodOrBrandArr: ['goodCarList', 'brandCarList'],
     current: 1,
     // 弹窗是否隐藏
     toastShow: true,
+    toastShowHidden: 'none',
     // 提交电话 所需的设备id
     brandeqId: '',
     toastContent: {
@@ -233,10 +238,19 @@ export default class Index extends wepy.page {
     belive: [
       {
         name: '非事故车',
-        img: 'https://bbs.cehome.com/wxApp/v.2/accident.png'
+        img: 'https://bbs.cehome.com/wxApp/v.2/accident.png',
+        type: 'isIncident'
       },
-      { name: '非火烧车', img: 'https://bbs.cehome.com/wxApp/v.2/hot.png' },
-      { name: '非水淹车', img: 'https://bbs.cehome.com/wxApp/v.2/water.png' }
+      {
+        name: '非火烧车',
+        img: 'https://bbs.cehome.com/wxApp/v.2/hot.png',
+        type: 'isFire'
+      },
+      {
+        name: '非水淹车',
+        img: 'https://bbs.cehome.com/wxApp/v.2/water.png',
+        type: 'isWater'
+      }
     ],
     imgInfo: {
       '101': '整机外观描述',
@@ -258,16 +272,45 @@ export default class Index extends wepy.page {
     // 实拍图片
     showImgsList: {},
     showImgBtn: true,
-    repeatItemList: null,
+    repeatItemList: {},
     // 优先车源
     goodCarList: null,
     // 同品牌车源
     brandCarList: null,
     // 车源切换
-    goodBrand: false
+    goodBrand: 0,
+    // 分享文案
+    shareTitle: '',
+    // 查看大图
+    previewImageList: [],
+    // 大数据统计
+    EQData: {
+      eq_id: '', // ：(设备id) 字符串
+      category: '', // ：(机型) 字符串
+      brand: '', // ：(品牌) 字符串
+      model: '', // ：( 型号) 字符串
+      out_date: '', // ：(出厂年限) 字符串
+      tonnage: '', // ：(吨位) 数值
+      hours: '', // ：(使用小时数) 数值
+      parking_place: '', // ：(停放地点) 字符串
+      price: '', // ：(价格) 数值
+      create_time: '', // ：(发布日期) 字符串
+      real_name: '', // ：(城市经理姓名) 字符串
+      Category: '设备详情页', // ："设备详情页"
+      Label: '', // ："卖家说区域"
+      Action: '' // ：(留空)
+    }
   }
 
+  watch = {}
   methods = {
+    // 查看详情图
+    showImgList(img) {
+      wx.previewImage({
+        current: img, // 当前显示图片的http链接
+        urls: this.previewImageList // 需要预览的图片http链接列表
+      })
+    },
     current(e) {
       this.current = e.detail.current + 1
     },
@@ -279,26 +322,41 @@ export default class Index extends wepy.page {
       this.$apply()
     },
     // 车源切换
-    goodOrBrand(e) {
-      let target = e.currentTarget
-      switch (target.id) {
-        case '0':
-          this.repeatItemList = this.goodCarList
-          this.goodBrand = false
-          break
-        case '1':
-          this.repeatItemList = this.brandCarList
-          this.goodBrand = true
-      }
+    goodOrBrand(n) {
+      this.goodBrand = n
       this.$apply()
     },
     // 电话弹窗
-    telToast() {
+    telToast(n) {
       // 买设备
       this.toastContent.toastHeader = '我要买设备'
       this.toastContent.toastButton = '免费通话'
       this.toastContent.toastContent = '请填写手机号，稍后铁甲客服会与您联系！'
+      this.toastContent.pageFromType = 'E'
       this.toastShow = false
+      this.getEQDataFun()
+      switch (Number(n)) {
+        case 1:
+          // 设备信息概述区域
+          this.EQData.Label = '设备信息概述区域'
+          this.setSensorsData('E27', this.EQData)
+          break
+        case 2:
+          // 管家信息区域
+          this.EQData.Label = '管家信息区域'
+          this.setSensorsData('E27', this.EQData)
+          break
+        case 3:
+          // 卖家说区域
+          this.EQData.Label = '卖家说区域'
+          this.setSensorsData('E27', this.EQData)
+          break
+        case 4:
+          // 吸底区域
+          this.EQData.Label = '吸底区域'
+          this.setSensorsData('E27', this.EQData)
+          break
+      }
       this.$apply()
     },
     // 拨打电话
@@ -310,14 +368,31 @@ export default class Index extends wepy.page {
     }
   }
 
+  // 统计
+  getEQDataFun() {
+    this.EQData.eq_id = this.eqId
+    this.EQData.category = this.detailHeader.manager.category
+    this.EQData.brand = this.detailHeader.manager.brand
+    this.EQData.model = this.detailHeader.manager.model
+    this.EQData.out_date = this.detailHeader.equipment.outDate
+    this.EQData.tonnage = this.detailHeader.equipment.tonnage
+    this.EQData.hours = this.detailHeader.equipment.hours
+    this.EQData.parking_place =
+      this.detailHeader.equipment.province +
+      '-' +
+      this.detailHeader.equipment.city
+    this.EQData.price = this.detailHeader.equipment.price
+    this.EQData.create_time = this.detailHeader.manager.createTimeStr
+    this.EQData.real_name = this.detailHeader.manager.realname
+  }
+
   onShareAppMessage(res) {
     // 分享
     if (res.from === 'button') {
     }
     return {
-      title: '铁甲二手机分享文案，文案待定',
-      path: `/pages/detail`,
-      imageUrl: '',
+      title: this.shareTitle,
+      path: `/pages/index?eqId=${this.eqId}`,
       success: async res => {},
       fail: res => {
         // 转发失败
@@ -325,9 +400,29 @@ export default class Index extends wepy.page {
     }
   }
 
-  events = {}
+  events = {
+    // 电话
+    itemToastShow: res => {
+      if (res == 1) {
+        // 买设备
+        this.toastContent.toastHeader = '我要买设备'
+        this.toastContent.toastButton = '免费通话'
+        this.toastContent.toastContent =
+          '请填写手机号，稍后铁甲客服会与您联系！'
+        this.toastShow = false
+        this.$apply()
+      }
+    }
+  }
 
-  onLoad(option) {
+  async onLoad(option) {
+    if (!option.eqId) {
+      // 没有参数返回首页
+      wx.reLaunch({
+        url: `/pages/index`
+      })
+      return
+    }
     this.eqId = option.eqId
     this.$apply()
     this.detailHeaderFun()
@@ -336,7 +431,6 @@ export default class Index extends wepy.page {
     this.getGoodCarList()
     this.getBrandCarList()
   }
-
   // 详情头
   detailHeaderFun() {
     wepy
@@ -359,11 +453,33 @@ export default class Index extends wepy.page {
           this.showImgsList[element.photoPosition].imgs.push(
             element.imgPathDto.pathMid
           )
+          this.previewImageList.push(element.imgPathDto.pathMid)
         })
-        console.log(this.showImgsList)
-
         // 设备id
         this.brandeqId = this.detailHeader.equipment.id
+
+        // 分享文案
+        let carAllInfo = ''
+        for (const key in this.detailHeader.equipment.orderAttrbute) {
+          switch (key) {
+            case '出厂时间':
+            case '小时数':
+            case '停放地点':
+              carAllInfo +=
+                '、' + this.detailHeader.equipment.orderAttrbute[key]
+              break
+          }
+        }
+
+        this.shareTitle =
+          '帮老铁看值不值！' +
+          this.detailHeader.equipment.brand +
+          this.detailHeader.equipment.model +
+          this.detailHeader.equipment.category +
+          '、' +
+          parseInt(this.detailHeader.equipment.price / 10000) +
+          '万' +
+          carAllInfo
         this.$apply()
       })
   }
@@ -413,7 +529,11 @@ export default class Index extends wepy.page {
       .then(res => {
         let data = JSON.parse(res.data.substring(2, res.data.length - 1))
         this.goodCarList = data
-        this.repeatItemList = this.goodCarList
+        this.repeatItemList.goodCarList = {
+          id: 0,
+          list: this.goodCarList
+        }
+
         this.$apply()
       })
   }
@@ -428,6 +548,10 @@ export default class Index extends wepy.page {
       .then(res => {
         let data = JSON.parse(res.data.substring(2, res.data.length - 1))
         this.brandCarList = data
+        this.repeatItemList.brandCarList = {
+          id: 1,
+          list: this.brandCarList
+        }
         this.$apply()
       })
   }
@@ -447,12 +571,16 @@ export default class Index extends wepy.page {
     position: relative;
     .swiper {
       width: 100%;
-      height: 500rpx;
+      min-height: 500rpx;
       overflow: hidden;
       position: relative;
       swiper {
         width: 100%;
-        height: 500rpx;
+        min-height: 500rpx;
+        .slide-image {
+          width: 100%;
+          height: 100%;
+        }
       }
       .code,
       .page {
@@ -593,6 +721,7 @@ export default class Index extends wepy.page {
           position: absolute;
           left: 0;
           bottom: 0;
+          animation: bounceInRight 1.6s linear;
           image {
             width: 100%;
             height: 100%;
@@ -628,54 +757,15 @@ export default class Index extends wepy.page {
       background: #fff;
       margin-bottom: 20rpx;
       .gradient {
+        background: url('https://bbs.cehome.com/wxApp/v.2/tiebaobei.png')
+          no-repeat 50% 50%;
+        background-size: 100% 100%;
         width: 100%;
         height: 200rpx;
-        background-image: linear-gradient(
-          -225deg,
-          #fadeae 0%,
-          #fff1d8 45%,
-          #fbdba5 100%
-        );
-        border-radius: 8rpx;
-        position: relative;
-        overflow: hidden;
         margin-bottom: 24rpx;
-        &:last-child {
-          margin-bottom: 0;
-        }
-        &:before,
-        &:after {
-          content: '';
-          position: absolute;
-          right: 0;
-          top: 0;
-          width: 416rpx;
-          height: 200rpx;
-          background-image: linear-gradient(
-            -225deg,
-            rgba(0, 0, 0, 0) 0%,
-            rgba(0, 0, 0, 0) 44.9%,
-            #f7e2bd 45%,
-            #f7e2bd 47%,
-            rgba(247, 226, 189, 0.9) 100%
-          );
-        }
-        &:after {
-          width: 335rpx;
-          z-index: 1;
-          background-image: linear-gradient(
-            -225deg,
-            rgba(0, 0, 0, 0) 0%,
-            rgba(0, 0, 0, 0) 44.9%,
-            #f2d9af 45%,
-            #f2d9af 100%
-          );
-        }
       }
       .ensure {
-        position: absolute;
-        left: 0;
-        top: 0;
+        position: relative;
         width: 100%;
         height: 200rpx;
         padding: 30rpx 15rpx 30rpx 30rpx;
@@ -1078,6 +1168,9 @@ export default class Index extends wepy.page {
     }
   }
 }
+.hidden {
+  display: none;
+}
 @keyframes buttonShow {
   0% {
     transform: translate3d(120rpx, 0, 0);
@@ -1100,6 +1193,37 @@ export default class Index extends wepy.page {
   }
   100% {
     transform: scale(0.92);
+  }
+}
+@keyframes bounceInRight {
+  0%,
+  60%,
+  75%,
+  90%,
+  to {
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+
+  0% {
+    opacity: 0;
+    transform: translate3d(3000px, 0, 0);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translate3d(-25px, 0, 0);
+  }
+
+  75% {
+    transform: translate3d(10px, 0, 0);
+  }
+
+  90% {
+    transform: translate3d(-5px, 0, 0);
+  }
+
+  to {
+    transform: none;
   }
 }
 </style>

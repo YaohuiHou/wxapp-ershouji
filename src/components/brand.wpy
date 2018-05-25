@@ -1,33 +1,37 @@
 <template>
-  <view class="view" wx:if="{{brandShow}}">
+  <view class="view" hidden="{{!brandShow}}">
     <view class="brand">
       <view class="head">选择品牌</view>
       <scroll-view scroll-y class="scroll-view" scroll-into-view="{{navInfo}}" scroll-with-animation="{{scrollAnimation}}" >
-        <text class="h4" id="top">热门品牌</text>
-        <view class="hot-content">
-          <view class="brand-li" wx:for="{{hotBrand}}" wx:key="{{index}}" @tap="selectHotFun({{item}})">
-            <image src="{{item.img}}"></image>
-            <text>{{item.name}}</text>
+        <view>
+          <text class="h4" id="top">热门品牌</text>
+          <view class="hot-content">
+            <view class="brand-li" wx:for="{{hotBrand}}" wx:key="{{index}}" @tap="selectHotFun({{item}})">
+              <image src="{{item.img}}"></image>
+              <text>{{item.name}}</text>
+            </view>
           </view>
         </view>
-        <block wx:for="{{brandList}}" wx:key="{{index}}">
-          <text class="h4" id="{{index}}">{{index}}</text>
-          <view class="content">
-            <text
-              wx:for="{{item}}"
-              wx:key="{{index}}"
-              class="{{item.selected ? 'selected' : ''}}"
-              data-id="{{item.id}}"
-              @tap="selectFun({{item}})"
-            >{{item.name}}</text>
-          </view>
-        </block>
+        <view class="brand-list">
+          <block wx:for="{{brandList}}" wx:key="{{index}}">
+            <text class="h4" id="{{index}}">{{index}}</text>
+            <view class="content">
+              <text
+                wx:for="{{item}}"
+                wx:key="{{index}}"
+                class="{{item.selected ? 'selected' : ''}}"
+                data-id="{{item.id}}"
+                @tap="selectFun({{item}})"
+              >{{item.name}}</text>
+            </view>
+          </block>
+        </view>
       </scroll-view>
 
       <!-- 选中的弹窗样式 -->
-      <view class="scale" hidden="{{navInfoShow}}">{{navInfo}}</view>
+      <view class="scale" hidden="{{navInfoShow}}">{{navInfo == 'top' ? '热' : navInfo}}</view>
       <!-- 字母导航 -->
-      <view class="nav" catchtouchmove="indexNavMove" catchtouchend="indexNavEnd" >
+      <view class="nav" catch:touchmove="indexNavmoveFun" catch:touchend="indexNavEnd" >
         <view 
           class="{{[ navArr[index] === navInfo ? 'text selected' : 'text']}}"
           @tap="indexNav({{index}})" id="{{navArr[index]}}"
@@ -36,6 +40,7 @@
           data-number="{{index}}"
         >{{item}}</view>
       </view>
+      
     </view>
     <view class="mask" @tap="toastMask"></view>
   </view>
@@ -44,7 +49,7 @@
 <script>
 import wepy from 'wepy'
 import mixin from '../mixins'
-export default class Index extends wepy.component {
+export default class brandId extends wepy.component {
   props = {
     brandShow: {
       type: Boolean,
@@ -172,32 +177,61 @@ export default class Index extends wepy.component {
       }
     ],
     content: {},
-    brandList: {}
+    brandList: {},
+    // 变化值
+    testPageNum: 0
+  }
+
+  watch = {
+    brandShow() {
+      if (this.testPageNum > 0) return
+      this.testPageNum++
+      wx.getStorageInfo({
+        success: res => {
+          let storage = res.keys
+          if (storage.indexOf('brandsArr') != -1) {
+            wx.getStorage({
+              key: 'brandsArr',
+              success: res => {
+                this.brandList = JSON.parse(res.data)
+                this.navArr = Object.keys(this.brandList).sort()
+                this.navArr.unshift('热')
+                this.$apply()
+              }
+            })
+          } else {
+            this.brandListFun()
+          }
+        }
+      })
+    }
   }
   mixins = [mixin]
 
-  onLoad() {
-    this.brandListFun()
-  }
+  onLoad() {}
   methods = {
-    //导航栏
-    indexNavmove(e) {
+    // 导航栏
+    indexNavmoveFun(e) {
       let num = e.target.dataset.number
       let top = e.target.offsetTop
-      let index = this.data.indexNav[
-        Math.floor(
-          (e.changedTouches[0].pageY - e.currentTarget.offsetTop) / (top / num)
-        )
-      ]
+      let index = Math.floor(
+        (e.changedTouches[0].pageY - e.currentTarget.offsetTop) / (top / num)
+      )
 
-      if (index === this.data.activeIndex) {
-        return
+      if (index !== this.navIndex) {
+        this.navIndex = index
+        this.navInfo = this.navArr[index]
+        this.navInfoShow = false
+        this.scrollAnimation = false
+        this.$apply()
       }
     },
     indexNavEnd(e) {
       let time = setTimeout(() => {
-        ;(this.navInfoShow = true), (this.scrollAnimation = true)
+        this.navInfoShow = true
+        this.scrollAnimation = true
         clearTimeout(time)
+        this.$apply()
       }, 500)
     },
     // 导航点击
@@ -210,12 +244,13 @@ export default class Index extends wepy.component {
         this.navInfo = this.navArr[index]
       }
       this.navInfoShow = false
+      this.$apply()
 
       let time = setTimeout(() => {
         this.navInfoShow = true
         this.$apply()
         clearTimeout(time)
-      }, 1000)
+      }, 500)
     },
     // 关闭
     toastMask() {
@@ -224,6 +259,12 @@ export default class Index extends wepy.component {
     },
     // 热门品牌选中
     selectHotFun(item) {
+      wx.showLoading({
+        title: '数据加载中...'
+      })
+      this.brandShow = false
+      this.submitData.brandId = item.id
+      this.brandData = item
       // 判断之前数据
       if (this.startSelectItem) {
         this.brandList[this.startSelectItem.initial].forEach(ele => {
@@ -234,19 +275,27 @@ export default class Index extends wepy.component {
       }
       // 将选中数据存储
       this.startSelectItem = null
+
+      this.$apply()
+      this.$emit('getList', 2)
+    },
+
+    // 选中品牌
+    async selectFun(item) {
+      wx.showLoading({
+        title: '数据加载中...'
+      })
       this.brandShow = false
       this.submitData.brandId = item.id
       this.brandData = item
-      this.$apply()
-    },
-    // 选中品牌
-    async selectFun(item) {
+
       let EnStart = item.initial
       await this.brandList[EnStart].forEach(ele => {
         if (ele.id === item.id) {
           ele.selected = true
         }
       })
+
       // 判断之前数据
       if (this.startSelectItem) {
         await this.brandList[this.startSelectItem.initial].forEach(ele => {
@@ -255,13 +304,11 @@ export default class Index extends wepy.component {
           }
         })
       }
-      this.scrollAnimation = false
       // 将选中数据存储
       this.startSelectItem = item
-      this.brandShow = false
-      this.submitData.brandId = item.id
-      this.brandData = item
+      // 请求接口
       this.$apply()
+      this.$emit('getList', 2)
     }
   }
 
@@ -279,13 +326,32 @@ export default class Index extends wepy.component {
         .then(res => {
           let data = JSON.parse(res.data.substring(2, res.data.length - 1))
           if (data.ret == 0) {
+            console.log(data.result)
+
             this.brandList = data.result
             this.navArr = Object.keys(this.brandList).sort()
             this.navArr.unshift('热')
+            // 存储品牌
+            wx.setStorage({
+              key: 'brandsArr',
+              data: JSON.stringify(this.brandList)
+            })
+
             this.$apply()
           }
         })
     })
+  }
+
+  // 筛选
+  changeItemSelectFun() {
+    if (this.startSelectItem) {
+      this.brandList[this.startSelectItem.initial].forEach(ele => {
+        if (ele.id === this.startSelectItem.id) {
+          ele.selected = false
+        }
+      })
+    }
   }
 }
 </script>
@@ -346,9 +412,9 @@ export default class Index extends wepy.component {
         flex-direction: row;
         flex-wrap: wrap;
         align-items: center;
+        align-content: flex-start;
         .brand-li {
-          flex: 3;
-          min-width: 33%;
+          width: 33%;
           padding: 20rpx 0;
           display: flex;
           flex-direction: column;
@@ -365,10 +431,10 @@ export default class Index extends wepy.component {
           }
         }
       }
+      .brand-list {
+      }
       .content {
         background-color: #fff;
-        display: flex;
-        flex-direction: column;
         padding-left: 60rpx;
         text {
           display: block;
@@ -392,8 +458,7 @@ export default class Index extends wepy.component {
 .nav {
   position: fixed;
   right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  bottom: 120rpx;
 }
 .nav .text {
   display: block;

@@ -1,16 +1,18 @@
 <template>
   <view class="home">
-    <!-- head -->
-    <block>
-      <screenHeader class="header"
-        :chooseShow.sync="chooseShow"
-        :typeMode.sync="typeMode"
-        :brandShow.sync="brandShow"
-        :sortShow.sync="sortShow"
-        :address.sync="address"
-      ></screenHeader>
-    </block>
+    <!-- 提示语 -->
+    <view class="hine-text" wx:if="{{hintText}}">点击添加到桌面，下次进来更方便</view>
     <scroll-view class="content" scroll-y bindscrolltolower="homeList" enable-back-to-top="true">
+      <!-- head -->
+      <block>
+        <screenHeader class="header"
+          :chooseShow.sync="chooseShow"
+          :typeMode.sync="typeMode"
+          :brandShow.sync="brandShow"
+          :sortShow.sync="sortShow"
+          :address.sync="address"
+        ></screenHeader>
+      </block>
       <!-- 筛选 -->
       <selectView
         :typeMode.sync="typeMode"
@@ -19,11 +21,17 @@
         :startArr.sync="startArr"
         :submitData.sync="submitData"
       ></selectView>
+      <view class="nothing" wx:if="{{pageList.length<=0}}">
+        <image src="https://bbs.cehome.com/wxApp/v.2/nothing.png"></image>
+        <text>什么都没有找到哟~</text>
+      </view>
       <!-- 列表 -->
       <repeat for="{{pageList}}" key="index" index="index" item="item">
-        <listItem :item="item"></listItem>
+        <listItem
+          :item="item"
+        ></listItem>
       </repeat>
-      <text class="loading">{{loadingMsg}}</text>
+      <text wx:if="{{pageList.length>0}}" class="loading">{{loadingMsg}}</text>
     </scroll-view>
     <view class="footer">
       <text class="pay" data-id="0" @tap="telToast(0)">买设备</text>
@@ -31,27 +39,28 @@
     </view>
     <!-- 电话弹窗 -->
     <toastView
+      :EQData.sync="EQData"
       :toastShow.sync="toastShow"
       :toastContent.sync="toastContent"
     ></toastView>
     <!-- 筛选弹窗 -->
-    <chooseToast
+    <choose
       :chooseShow.sync="chooseShow"
       :newSelect.sync="newSelect"
       :submitData.sync="submitData"
-    ></chooseToast>
+    ></choose>
     <!-- 机型 -->
-    <typeModeBox
+    <typeMode
       :typeMode.sync="typeMode"
       :submitData.sync="submitData"
       :typeModeData.sync="typeModeData"
-    ></typeModeBox>
+    ></typeMode>
     <!-- 品牌 -->
-    <brand
+    <brandId
       :brandShow.sync="brandShow"
       :submitData.sync="submitData"
       :brandData.sync="brandData"
-    ></brand>
+    ></brandId>
     <!-- 排序 -->
     <sortView
       :sortShow.sync="sortShow"
@@ -81,15 +90,19 @@ export default class Index extends wepy.page {
     listItem,
     screenHeader,
     selectView,
-    chooseToast,
-    typeModeBox,
-    brand,
+    choose: chooseToast,
+    typeMode: typeModeBox,
+    brandId: brand,
     sortView
   }
 
   mixins = [mixins]
 
   data = {
+    itemToastShow: false,
+    sceneText: 0,
+    // 提示语
+    hintText: true,
     // 弹窗是否隐藏
     toastShow: true,
     animationToast: {},
@@ -106,7 +119,7 @@ export default class Index extends wepy.page {
     // 选中固定参数
     startArr: [
       { type: 'eqSourceId', name: '自营', id: 1, select: false },
-      { name: '不对版赔付', id: 2, select: false },
+      { type: 'keyword', name: '不对版赔付', id: 2, select: false },
       { type: 'managerRecommend', name: '管家推荐', id: 1, select: false }
     ],
     // 筛选弹窗
@@ -121,26 +134,62 @@ export default class Index extends wepy.page {
     sortShow: false,
     showType: '1',
     // 选中地址
-    address: {},
+    address: {
+      name: '全国',
+      id: '',
+      level: 2
+    },
+    // 分享文案
+    shareContents: [
+      '刚出师的徒弟就在这买了一台挖掘机',
+      '天啊！昨天买的那台挖掘机原来在这更便宜',
+      '原来那天师父说的那台挖掘机就是它',
+      '听老师傅说买挖掘机也是一门艺术',
+      '丑媳妇见公婆，90后小伙入手第一台挖机',
+      '头一回听说挖掘机还有公母这一说！',
+      '听说开挖机十年的师父迎来事业第二春！',
+      '老了，00后都开始买挖机当老板了！',
+      '工期不如意？是不是挖机买的不合适',
+      '买挖机不用愁，上铁甲最高可贷60万！'
+    ],
     // 列表信息
     pageList: [],
     // loading文案
     loadingMsg: '正在拼命加载...',
+    // 初始数据备份
+    copySubmitData: {},
+    // 大数据统计
+    EQData: {
+      eq_id: '', // ：(设备id) 字符串
+      category: '', // ：(机型) 字符串
+      brand: '', // ：(品牌) 字符串
+      model: '', // ：( 型号) 字符串
+      out_date: '', // ：(出厂年限) 字符串
+      tonnage: '', // ：(吨位) 数值
+      hours: '', // ：(使用小时数) 数值
+      parking_place: '', // ：(停放地点) 字符串
+      price: '', // ：(价格) 数值
+      create_time: '', // ：(发布日期) 字符串
+      real_name: '', // ：(城市经理姓名) 字符串
+      Category: '', // ："设备详情页"
+      Label: '', // ："卖家说区域"
+      Action: '' // ：(留空)
+    },
     // 请求数据
     submitData: {
       callback: 1,
       userId: 0, // 用户id
-      client: 8, //（微信小程序传8）
+      client: 8, // （微信小程序传8）
       distinctId: '', // 设备标识
       locationId: '', // 位置信息
-      provinceId: '', // 省id
+      provinceId: '-1', // 省id
       cityId: '', // 城市id
       showRecommend: 'N', // 是否推荐 Y 展示 N 不展示
       keyword: '', // 输入的关键词 （不对版赔付）
-      eqSourceId: '', //设备属性id（1自营，2独家，3检测等）
+      eqSourceId: '', // 设备属性id（1自营，2独家，3检测等）
       categoryId: '', // 机型id
       secondCategoryId: '', // 二级机型id
-      serialId: '', // 系列id
+      serialId: '0', // 系列id
       multiSerialId: '', // 多系列id
       brandId: '', // 品牌id
       modelId: '', // 型号id
@@ -149,24 +198,24 @@ export default class Index extends wepy.page {
       hourId: '', // 小时id
       yearId: '', // 年份id
       assureIds: '', // 保障id
-      tonnage: '', //具体吨位值
-      priceReduced: '', //降价急售 1.是 0否
-      hasVideo: '', //有视频 1.是 0否
-      tjInsurance: '', //是有铁甲保 2.是 0否
-      managerRecommend: '', //是有管家推荐 1.是 0否
-      armLengthId: '', //臂架长度
-      pressureId: '', //压力
-      productionId: '', //产量
-      powerId: '', //动力形式
-      distributingId: '', //分配阀
-      emissionStandardsId: '', //排放标准
-      loadingCapacityId: '', //装载容量
-      sortId: 0, //默认排序id （0 默认排序，1，更新时间，2，看车最多，3，价格最低，4，价格最高，5，按小时数最低，6，按小时数最高，8，出产年限）
+      tonnage: '', // 具体吨位值
+      priceReduced: '', // 降价急售 1.是 0否
+      hasVideo: '', // 有视频 1.是 0否
+      tjInsurance: '', // 是有铁甲保 2.是 0否
+      managerRecommend: '', // 是有管家推荐 1.是 0否
+      armLengthId: '', // 臂架长度
+      pressureId: '', // 压力
+      productionId: '', // 产量
+      powerId: '', // 动力形式
+      distributingId: '', // 分配阀
+      emissionStandardsId: '', // 排放标准
+      loadingCapacityId: '', // 装载容量
+      sortId: 0, // 默认排序id （0 默认排序，1，更新时间，2，看车最多，3，价格最低，4，价格最高，5，按小时数最低，6，按小时数最高，8，出产年限）
       order: 1, // 顺序规则1：升序，2：降序
       pageIndex: 1, // 页数
       pageSize: 10, // 每页显示条数
-      randomSort: '', //获取后的数据是否要随机排序
-      adKey: '' //中联重科广告
+      randomSort: '', // 获取后的数据是否要随机排序
+      adKey: '' // 中联重科广告
     }
   }
   watch = {
@@ -176,31 +225,23 @@ export default class Index extends wepy.page {
     typeModeData(newVal, oldVal) {
       newVal.selectType = 'typeMode'
       this.newSelect['typeMode'] = newVal
+      this.$apply()
     },
     // 品牌数据
     brandData(newVal, oldVal) {
       newVal.selectType = 'brandId'
       this.newSelect['brandId'] = newVal
+      this.$apply()
     },
     address(newVal, oldVal) {
-      if (!newVal.level) return
+      this.submitData.cityId = ''
+      this.submitData.provinceId = ''
       if (newVal.level == 2) {
         this.submitData.provinceId = newVal.id
-        this.submitData.cityId = ''
       } else {
         this.submitData.cityId = newVal.id
-        this.submitData.provinceId = ''
       }
-    },
-    // 提交数据
-    submitData(newVal, oldVal) {
-      if (newVal.pageIndex === oldVal.pageIndex) {
-        this.submitData.pageIndex = 1
-        this.homeDataDisable = false
-        this.pageList = []
-        // 列表请求
-        this.getPageHomeList()
-      }
+      this.$apply()
     }
   }
   methods = {
@@ -222,7 +263,12 @@ export default class Index extends wepy.page {
             '请填写手机号，稍后铁甲管家会与您联系！'
           break
       }
+      this.toastContent.pageFromType = 'E'
       this.toastShow = false
+      this.$apply()
+      // 埋点
+      // this.getEQDataFun()
+      // this.setSensorsData('E27_1', this.EQData)
     },
     // 列表加载
     homeList() {
@@ -233,25 +279,146 @@ export default class Index extends wepy.page {
     }
   }
 
-  events = {}
+  events = {
+    // 监听删除
+    delete: type => {
+      // 移除搜索内容
+      wx.getStorage({
+        key: 'screenVal',
+        complete: res => {
+          if (res.data) {
+            delete this.newSelect.keyword
+            this.submitData.keyword = ''
+            this.$apply()
+            wx.removeStorage({
+              key: 'screenVal'
+            })
+          }
+          this.deleteSelectedItem(type)
+        }
+      })
+    },
+    // 请求接口
+    getList: (res, n) => {
+      if (res == 3) {
+        // 筛选底盘时为空
+        this.pageList = []
+        wx.hideLoading()
+        this.$apply()
+        return
+      }
+
+      if (res == 1) {
+        this.getAppList()
+      } else {
+        // 移除搜索内容
+        wx.getStorage({
+          key: 'screenVal',
+          complete: res => {
+            if (res.data) {
+              delete this.newSelect.keyword
+              this.submitData.keyword = ''
+              this.$apply()
+              wx.removeStorage({
+                key: 'screenVal'
+              })
+            }
+            this.getAppList()
+          }
+        })
+      }
+    },
+    // 电话
+    itemToastShow: (obj, type) => {
+      // 咨询设备
+      this.getEQDataFun(obj)
+      this.toastContent.toastHeader = '我要买设备'
+      this.toastContent.toastButton = '免费通话'
+      this.toastContent.toastContent = '请填写手机号，稍后铁甲客服会与您联系！'
+      this.toastShow = false
+      this.toastContent.pageFromType = type
+      this.$apply()
+      this.setSensorsData('E27_1', this.EQData)
+    }
+  }
+
+  // 统计
+  getEQDataFun(obj) {
+    // 截取机型品牌
+    let brandModelCategory = obj.eqTitle.match(
+      /[\u2e80-\uffff]+\s*(.+?)\s*[\u2e80-\uffff]+/
+    )
+    let model = obj.eqTitle.match(/[a-zA-Z0-9]+\s*(.+?)\s*[a-zA-Z0-9]+/)[0]
+    // 生成品牌机型的数组 [brand,category]
+    let BCArr = obj.eqTitle.split(model)
+    this.EQData.eq_id = obj.eqId
+    this.EQData.category = BCArr[1]
+    this.EQData.brand = BCArr[0]
+    this.EQData.model = model
+    this.EQData.out_date = obj.eqTimeInfo.split('|')[0].match(/[0-9]+/)[0]
+    this.EQData.tonnage = ''
+    this.EQData.hours = obj.eqTimeInfo.split('|')[1].match(/[0-9]+/)[0]
+    this.EQData.parking_place = obj.areaInfo
+    this.EQData.price = obj.priceInfo
+    this.EQData.create_time = obj.updateTimeInfo
+    this.EQData.real_name = ''
+    switch (this.submitData.keyword) {
+      case '':
+      case '不对版赔付':
+        this.EQData.Category = '筛选列表页'
+        break
+
+      default:
+        this.EQData.Category = '搜索列表页'
+        break
+    }
+  }
 
   onShareAppMessage(res) {
     // 分享
+    let num = Math.round(Math.random() * 15)
+    num == 0 ? num++ : num
+
     if (res.from === 'button') {
     }
     return {
-      title: '铁甲二手机分享文案，文案待定',
+      title: this.shareContents[Math.round(Math.random() * 9)],
       path: `/pages/index`,
-      imageUrl: '',
+      imageUrl: `https://bbs.cehome.com/wxApp/v.2/share/${
+        num == 6 ? 7 : num
+      }.png`,
       success: async res => {},
       fail: res => {
         // 转发失败
       }
     }
   }
-  onLoad() {
-    // 获取缓存定位地址
-    this.getPostionInfo()
+  onLoad(option) {
+    // 查看是否为分享出去打开的链接
+    if (option.eqId) {
+      wx.navigateTo({
+        url: `/pages/detail?eqId=${option.eqId}`
+      })
+    }
+    // 备份初始数据
+    this.$apply(() => {
+      let data = JSON.stringify(this.submitData)
+      this.copySubmitData = JSON.parse(data)
+
+      let obj = wepy.getStorageSync('sceneText')
+      // 场景值：安卓桌面
+      if (obj.scene === 1023) {
+        this.hintText = false
+      } else {
+        try {
+          let scene = wepy.getStorageSync('sceneText')
+          if (scene === 'scene1023') {
+            this.hintText = false
+          }
+        } catch (error) {}
+      }
+    })
+    this.getAppList()
 
     wx.showLoading({
       title: '数据加载中...'
@@ -259,35 +426,86 @@ export default class Index extends wepy.page {
     wx.removeStorage({
       key: 'screenVal'
     })
-
+    wx.removeStorage({
+      key: 'cityObj'
+    })
+    // wx.getStorage({
+    //   key: 'brandsArr'
+    // })
     setTimeout(() => {
       wx.hideLoading()
-    }, 3e3)
+      this.hintText = false
+      this.$apply()
+    }, 4e3)
   }
   onShow() {
     // 搜索信息
     wx.getStorage({
       key: 'screenVal',
-      success: res => {
+      complete: res => {
         if (res.data) {
+          let data = JSON.stringify(this.copySubmitData)
+          this.submitData = JSON.parse(data)
+
           this.submitData.keyword = res.data
           if (res.data != this.startArr[1].name) {
             this.newSelect.keyword = {
               name: res.data,
               type: 'keyword'
             }
+            this.startArr[1].select = false
           } else {
             this.startArr[1].select = true
           }
+
+          // 清除时间
+          this.address = {
+            name: '全国',
+            id: '',
+            level: 2
+          }
+          wx.setStorage({
+            key: 'cityObj',
+            data: JSON.stringify(this.address)
+          })
+          this.deleteSelectedItem('deleteAll')
           this.$apply()
+        } else {
+          // 获取缓存定位地址
+          this.getPostionInfo()
         }
       }
     })
+
+    // 详情页缓存
+    wepy.removeStorage({ key: 'CarsListGoodOrBrand' })
+  }
+
+  // 卸载之后清除数据
+  onUnload() {
+    // 清除数据
+    // wx.removeStorage({ key: 'cityObj' })
+  }
+
+  // 数据请求
+  getAppList() {
+    this.submitData.pageIndex = 1
+    this.homeDataDisable = false
+    this.pageList = []
+    // 底盘请求置为空
+    if (!this.newSelect['none']) {
+      // 列表请求
+      wx.showLoading({
+        title: '数据加载中...'
+      })
+      this.getPageHomeList()
+    }
   }
 
   // 首页列表
   getPageHomeList() {
-    console.log(this.submitData, '提交内容')
+    console.log(this.submitData, '更新')
+
     wepy
       .request({
         url: `${this.host}wx/getEqAndSearchList`,
@@ -307,6 +525,7 @@ export default class Index extends wepy.page {
             this.loadingMsg = '哎呦喂，已经见底了。'
           } else {
             this.homeDataDisable = false
+            this.loadingMsg = '正在拼命加载...'
           }
 
           wx.hideLoading()
@@ -315,24 +534,78 @@ export default class Index extends wepy.page {
       })
   }
 
+  // 选中项数据删除
+  deleteSelectedItem(type) {
+    console.log(type)
+
+    switch (type) {
+      case 'deleteAll':
+        this.$invoke(`./typeMode`, 'changeItemSelectFun')
+        this.$invoke(`./brandId`, 'changeItemSelectFun')
+        this.$invoke(`./choose`, 'resetFun')
+        // 清空数据
+        for (const key in this.newSelect) {
+          if (key != 'keyword') {
+            if (key != 'none') {
+              this.submitData[key] = ''
+            }
+            delete this.newSelect[key]
+          }
+        }
+        break
+      case 'typeMode':
+      case 'brandId':
+        this.$invoke(`./${type}`, 'changeItemSelectFun')
+        break
+      default:
+        // 自营类清空
+        this.startArr.forEach(ele => {
+          ele.select = false
+          this.submitData[ele.type] = ''
+        })
+        this.$invoke(`./choose`, 'resetFun', type)
+        break
+    }
+    // 重新请求数据
+    this.$apply()
+    this.getAppList()
+  }
+
   // 获取缓存定位地址
-  async getPostionInfo() {
-    await wx.getStorage({
+  getPostionInfo() {
+    wx.getStorage({
       key: 'cityObj',
       success: res => {
-        console.log(res, '对的')
-        if (!res.data) {
-          // 定位
-          this.cityChange()
-        } else {
+        let data = JSON.parse(res.data)
+        // 来之选择城市
+        if (data.from == 'city') {
           this.address = JSON.parse(res.data)
           this.$apply()
+          this.getAppList()
+          delete data.from
+          wx.setStorage({
+            key: 'cityObj',
+            data: JSON.stringify(data)
+          })
         }
+        // 移除搜索内容
+        delete this.newSelect.keyword
+        wx.removeStorage({
+          key: 'screenVal'
+        })
       },
       fail: res => {
-        console.log(res, '错的')
-
-        this.cityChange()
+        // this.address = {
+        //   name: '全国',
+        //   id: '',
+        //   level: 2
+        // }
+        // wx.setStorage({
+        //   key: 'cityObj',
+        //   data: JSON.stringify(this.address)
+        // })
+        // this.$apply()
+        // this.getAppList()
       }
     })
   }
@@ -368,13 +641,56 @@ export default class Index extends wepy.page {
   position: relative;
   height: 100vh;
   box-sizing: border-box;
-  padding: 168rpx 0 100rpx;
   overflow: hidden;
+  .hine-text {
+    position: fixed;
+    right: 30rpx;
+    top: 20rpx;
+    background: #486cdc;
+    font-size: 24rpx;
+    color: #fff;
+    padding: 20rpx;
+    box-shadow: 0 8rpx 8rpx 0 rgba(68, 83, 130, 0.32);
+    border-radius: 4px;
+    z-index: 10000;
+    animation: hintText 2s linear infinite;
+    &:before {
+      content: '';
+      position: absolute;
+      right: 80rpx;
+      top: -36rpx;
+      width: 0;
+      height: 0;
+      border: 20rpx solid transparent;
+      border-bottom: 20rpx solid #486cdc;
+      z-index: 1;
+    }
+  }
+  .nothing {
+    height: 340rpx;
+    display: block;
+    margin: 100rpx auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    image {
+      width: 288rpx;
+      height: 288rpx;
+      margin: 0 auto;
+    }
+    text {
+      margin-top: 30rpx;
+      color: #888;
+      font-size: 28rpx;
+    }
+  }
   .header {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
+    // position: fixed;
+    // left: 0;
+    // top: 0;
+    // width: 100%;
+    // z-index: 10;
   }
   .content {
     height: 100%;
@@ -387,10 +703,11 @@ export default class Index extends wepy.page {
       font-size: 28rpx;
       color: #888;
       background: #efeff4;
+      padding-bottom: 100rpx;
     }
   }
   .footer {
-    position: absolute;
+    position: fixed;
     left: 0;
     bottom: 0;
     width: 100%;
@@ -414,6 +731,23 @@ export default class Index extends wepy.page {
         background: #fb7530;
       }
     }
+  }
+}
+@keyframes hintText {
+  0% {
+    transform: translate3d(-30rpx, 0, 0);
+  }
+  25% {
+    transform: translate3d(0rpx, 0, 0);
+  }
+  50% {
+    transform: translate3d(30rpx, 0, 0);
+  }
+  75% {
+    transform: translate3d(0rpx, 0, 0);
+  }
+  100% {
+    transform: translate3d(-30rpx, 0, 0);
   }
 }
 </style>

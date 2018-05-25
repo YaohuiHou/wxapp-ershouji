@@ -8,7 +8,11 @@
         <view class="header">
           <text class="h2">{{detailHeader.equipment.brand}} {{detailHeader.equipment.model}} {{detailHeader.equipment.category}}</text>
           <view class="ul">
-            <text wx:for="{{detailHeader.equipment.orderAttrbute}}" wx:key="{{index}}" wx:if="{{ index != '发布时间' }}">{{item}}</text>
+            <block wx:for="{{detailHeader.equipment.orderAttrbute}}" wx:key="{{index}}" wx:if="{{ index == '出厂时间' || index == '小时数' || index == '停放地点' }}">
+              <text wx:if="{{index == '出厂时间'}}">{{item}}出厂</text>
+              <text wx:if="{{index == '小时数'}}">使用{{item}}</text>
+              <text wx:if="{{index == '停放地点'}}">{{item}}</text>
+            </block>
           </view>
         </view>
         <view class="price-view">
@@ -28,7 +32,7 @@
                 max="{{detailHeader.equipment.downPaymentStr}}"
                 value="{{sliderValue}}"
                 backgroundColor="#EFEFF4"
-                step="1"
+                step="{{stepValue}}"
                 activeColor="#486CDC"
                 block-size="20" block-color="#FB7530"
                 bindchanging="sliderChange"
@@ -94,6 +98,8 @@ export default class Index extends wepy.page {
 
   data = {
     eqId: 0,
+    // 滑动的步数
+    stepValue: 1,
     // 配置信息
     configs: null,
     // 车信息
@@ -122,12 +128,16 @@ export default class Index extends wepy.page {
       this.sliderValue = this.needPrice = e.detail.value
       this.startPrice =
         this.detailHeader.equipment.price / 10000 - this.needPrice
-      this.scale =
-        parseInt(this.needPrice / this.detailHeader.equipment.price / 10000) *
-        10
+      // this.scale =
+      //   parseInt(this.needPrice / this.detailHeader.equipment.price / 10000) *
+      //   10
 
       this.selectLeft =
         this.sliderValue / this.detailHeader.equipment.downPaymentStr * 100
+
+      this.scale = Math.ceil(
+        this.sliderValue / this.detailHeader.equipment.downPaymentStr / 2 * 100
+      )
       this.computeFun()
     },
     // 分期类型
@@ -144,15 +154,14 @@ export default class Index extends wepy.page {
     }
   }
 
-  async onLoad(option) {
+  onLoad(option) {
     this.eqId = option.eqId
-    await this.detailHeaderFun()
-    await this.getConfig()
+    this.detailHeaderFun()
   }
 
   // 计算函数
-  //等额本息的计算公式 每月还款额=[贷款本金×(年利率/12)×（1+(年利率/12）^还款月数]÷[（1+(年利率/12））^还款月数－1]
-  //增加先息后本的月还公式 每月月还额=贷款本金*(年利率/12），还款期限中最后一个月的月还额=贷款本金+贷款本金*(年利率/12）
+  // 等额本息的计算公式 每月还款额=[贷款本金×(年利率/12)×（1+(年利率/12）^还款月数]÷[（1+(年利率/12））^还款月数－1]
+  // 增加先息后本的月还公式 每月月还额=贷款本金*(年利率/12），还款期限中最后一个月的月还额=贷款本金+贷款本金*(年利率/12）
   computeFun() {
     // 年利率
     let periodMonthInterest = JSON.parse(this.configs.periodMonthInterest)
@@ -185,6 +194,8 @@ export default class Index extends wepy.page {
         }?callback=1`
       })
       .then(res => {
+        this.getConfig()
+
         let data = JSON.parse(res.data.substring(2, res.data.length - 1))
         this.detailHeader = data
 
@@ -193,7 +204,6 @@ export default class Index extends wepy.page {
           this.detailHeader.equipment.downPaymentStr
 
         this.needPrice = this.sliderValue = this.detailHeader.equipment.downPaymentStr
-
         this.$apply()
       })
   }
@@ -387,6 +397,22 @@ export default class Index extends wepy.page {
           margin: 0 50rpx;
           padding-top: 48rpx;
           position: relative;
+          &:before,
+          &:after {
+            content: '';
+            position: absolute;
+            top: 69rpx;
+            width: 4rpx;
+            height: 16rpx;
+          }
+          &:before {
+            left: 0;
+            background: #486cdc;
+          }
+          &:after {
+            right: 0;
+            background-color: #efeff4;
+          }
           .selected {
             font-size: 34rpx;
             color: #fb7530;

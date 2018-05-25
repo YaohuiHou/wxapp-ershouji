@@ -1,12 +1,11 @@
 <template>
-  <view class="view" wx:if="{{chooseShow}}">
+  <view class="view" hidden="{{!chooseShow}}">
     <view class="choose">
       <view class="head">筛选</view>
       <scroll-view scroll-y class="scroll-view">
-        <block wx:for="{{type}}" wx:key="{{index}}">
+        <block wx:for="{{typeList}}" wx:key="{{index}}" wx:if="{{item}}">
           <text class="h4">{{item.name}}</text>
           <view class="content">
-            <!-- <text class="selected">不对版赔付</text> -->
             <text
               wx:for="{{item.list}}"
               wx:key="{{index}}"
@@ -28,11 +27,15 @@
 <script>
 import wepy from 'wepy'
 import mixin from '../mixins'
-export default class Index extends wepy.component {
+export default class choose extends wepy.component {
   props = {
     chooseShow: {
       type: Boolean,
       default: false,
+      twoWay: true
+    },
+    submitData: {
+      type: Object,
       twoWay: true
     },
     newSelect: {
@@ -40,6 +43,48 @@ export default class Index extends wepy.component {
     }
   }
   data = {
+    tonnage: {
+      name: '吨位',
+      list: [
+        {
+          selectType: 'tonnageId',
+          index: 4,
+          select: false,
+          name: '6以下',
+          id: '1'
+        },
+        {
+          selectType: 'tonnageId',
+          index: 4,
+          select: false,
+          name: '6(含)-9(含)',
+          id: '2'
+        },
+        {
+          selectType: 'tonnageId',
+          index: 4,
+          select: false,
+          name: '10(含)-19(含)',
+          id: '3'
+        },
+        {
+          selectType: 'tonnageId',
+          index: 4,
+          select: false,
+          name: '20(含)-29(含)',
+          id: '4'
+        },
+        {
+          selectType: 'tonnageId',
+          index: 4,
+          select: false,
+          name: '30及以上',
+          id: '5'
+        }
+      ]
+    },
+    typeList: [],
+    getTypeList: [],
     type: [
       {
         name: '价格',
@@ -147,9 +192,60 @@ export default class Index extends wepy.component {
           }
         ]
       }
-    ]
+    ],
+    // 筛选排序
+    chooseSelecteds: {
+      1: 'priceId',
+      2: 'hourId',
+      3: 'yearId',
+      5: 'tonnage',
+      6: 'yearId',
+      7: 'armLengthId',
+      8: 'priceId',
+      9: 'tonnageId',
+      10: 'pressureId',
+      11: 'productionId',
+      12: 'powerId',
+      13: 'distributingId',
+      14: 'loadingCapacityId',
+      15: 'none'
+    },
+    newModelId: '',
+    oldModelId: '0'
   }
   mixins = [mixin]
+  watch = {
+    // 通过二级机型参数判断展示内容
+    chooseShow(newVal, oldVal) {
+      if (this.newModelId == this.oldModelId) return
+      if (newVal) {
+        this.typeList = this.type
+        switch (this.submitData.secondCategoryId) {
+          case 116:
+          case 55:
+          case 58:
+          case 90:
+          case 105:
+          case 106:
+          case 108:
+            this.getFilterList()
+            break
+          case 4:
+          case 5:
+          case 19:
+          case 163:
+            this.typeList[4] = this.tonnage
+            break
+        }
+      }
+      this.$apply()
+    },
+    submitData(n, o) {
+      this.newModelId = n.secondCategoryId
+      this.oldModelId = o.secondCategoryId
+      this.$apply()
+    }
+  }
   methods = {
     // 关闭
     toastMask() {
@@ -158,7 +254,7 @@ export default class Index extends wepy.component {
     },
     // 选中
     selectedFun(item) {
-      let arr = this.type[item.index].list
+      let arr = this.typeList[item.index].list
       arr.forEach(ele => {
         ele.select = false
         if (ele.id == item.id) {
@@ -168,48 +264,109 @@ export default class Index extends wepy.component {
       })
     },
     // 重置
-    resetFun() {
-      this.type.forEach(element => {
+    resetFun(type) {
+      this.typeList.forEach(element => {
         element.list.forEach(ele => {
-          ele.select = false
+          if (type) {
+            // 指定项去掉
+            if (ele.selectType == type) {
+              if (ele.select && this.newSelect[type]) {
+                this.submitData[ele.selectType] = ''
+                delete this.newSelect[type]
+              }
+              ele.select = false
+            }
+          } else {
+            // 全部去除
+            if (ele.select) {
+              this.submitData[ele.selectType] = ''
+              delete this.newSelect[ele.selectType]
+            }
+            ele.select = false
+          }
         })
       })
       this.$apply()
     },
     // 确定
-    submitFun() {
+    async submitFun() {
+      var n = 2
+      wx.showLoading({
+        title: '数据加载中...'
+      })
       this.chooseType = []
-      this.submitData.priceId = ''
-      this.submitData.hourId = ''
-      this.submitData.yearId = ''
-      this.type.forEach(element => {
+      // 清空
+      for (const key in this.chooseSelecteds) {
+        let me = this.chooseSelecteds[key]
+        if (me != 'none') {
+          this.submitData[me] = ''
+        }
+      }
+
+      this.typeList.forEach(element => {
         delete this.newSelect[element.list[0].selectType]
         element.list.forEach(ele => {
           if (ele.select) {
             this.chooseType.push(ele)
-            switch (ele.index) {
-              case 0:
-                // 价格
-                this.submitData.priceId = ele.id
-                this.newSelect[ele.selectType] = ele
-                break
-              case 1:
-                // 使用小时数
-                this.submitData.hourId = ele.id
-                this.newSelect[ele.selectType] = ele
-                break
-              case 2:
-                // 出厂年限
-                this.submitData.yearId = ele.id
-                this.newSelect[ele.selectType] = ele
-                break
+            // 判断底盘
+            if (ele.selectType != 'none') {
+              this.submitData[ele.selectType] = ele.id
+            } else {
+              n = 3
             }
+            this.newSelect[ele.selectType] = ele
           }
         })
       })
       this.chooseShow = false
       this.$apply()
+      // await this.$emit('delete', 1)
+      await this.$emit('getList', n)
     }
+  }
+  // 获取筛选条件
+  getFilterList() {
+    console.log(11)
+
+    wepy
+      .request({
+        url: `${this.host}wx/getFilterList`,
+        data: {
+          callback: 1,
+          secondCategoryId: this.submitData.secondCategoryId
+            ? this.submitData.secondCategoryId
+            : ''
+        }
+      })
+      .then(res => {
+        let data = JSON.parse(res.data.substring(2, res.data.length - 1))
+        if (data.ret == 0) {
+          let arr = data.result
+          // 转化
+          arr.forEach((element, index) => {
+            let list = []
+            let thisIndex = element.typeId - 1
+
+            element.filterDictList.forEach((ele, i) => {
+              list[i] = {
+                selectType: this.chooseSelecteds[element.typeId],
+                index: thisIndex,
+                select: false,
+                name: ele.filterName,
+                id: ele.typeId.split('_')[1]
+              }
+            })
+
+            this.getTypeList[thisIndex] = {
+              name: element.filterName,
+              list: list
+            }
+          })
+          this.typeList = this.getTypeList
+
+          this.$apply()
+        }
+      })
   }
 }
 </script>

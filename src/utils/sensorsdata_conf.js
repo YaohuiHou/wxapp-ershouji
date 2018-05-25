@@ -10,11 +10,11 @@ var conf = {
   // 选择需要
   register: {},
   // 如果需要向 pageOnshow 方法中添加自定义参数（ sa.track 方法中添加参数)则保留 onshow 方法，否则删除下面方法即可。
-  onshow: function (sa, router) {
+  onshow: function(sa, router) {
     sa.track('$MPViewScreen', {
       $url: router
-    });
+    })
   }
-};
+}
 
-module.exports = conf;
+module.exports = conf

@@ -1,9 +1,10 @@
 <template>
-  <navigator class="item" url="/pages/detail?eqId={{item.id}}" hover-class="none">
+<view class="item">
+  <navigator url="/pages/detail?eqId={{item.id}}" hover-class="none">
     <view class="content">
       <view class="figure">
         <text class="hint" wx:if="{{item.reducedPriceStr}}">已降{{item.reducedPriceStr}}</text>
-        <image src="{{item.firstImgPathDto.pathSma}}"></image>
+        <image lazy-load mode="aspectFill" src="{{item.firstImgPathDto.pathSma}}"></image>
       </view>
       <view class="introduce">
         <text class="h4">{{item.brandName}}{{item.modelName}}{{item.categoryName}}</text>
@@ -19,10 +20,11 @@
           <text class="price">{{item.formatPrice}}万</text>
           <text wx:if="{{item.downPaymentStr}}">首付{{item.downPaymentStr}}万</text>
         </view>
-        <text class="btn">询底价</text>
       </view>
     </view>
   </navigator>
+  <text class="btn" @tap="goTelToast">询底价</text>
+</view>
 </template>
 
 
@@ -40,7 +42,11 @@ export default class Index extends wepy.component {
 
   onLoad() {}
 
-  methods = {}
+  methods = {
+    goTelToast() {
+      this.$emit('itemToastShow', this.item, 'L')
+    }
+  }
 }
 </script>
 
@@ -48,6 +54,7 @@ export default class Index extends wepy.component {
 .item {
   padding-left: 20rpx;
   background-color: #fff;
+  position: relative;
   .content {
     padding: 30rpx 22rpx 30rpx 0;
     border-bottom: 1rpx solid #e5e5e5;
@@ -133,21 +140,21 @@ export default class Index extends wepy.component {
           }
         }
       }
-      .btn {
-        position: absolute;
-        right: 0;
-        bottom: 0;
-        width: 120rpx;
-        height: 60rpx;
-        line-height: 60rpx;
-        background: #ffffff;
-        border: 1rpx solid #486cdc;
-        border-radius: 6rpx;
-        font-size: 26rpx;
-        color: #486cdc;
-        text-align: center;
-      }
     }
+  }
+  .btn {
+    position: absolute;
+    right: 24rpx;
+    bottom: 32rpx;
+    width: 120rpx;
+    height: 60rpx;
+    line-height: 60rpx;
+    background: #ffffff;
+    border: 1rpx solid #486cdc;
+    border-radius: 6rpx;
+    font-size: 26rpx;
+    color: #486cdc;
+    text-align: center;
   }
 }
 </style>
