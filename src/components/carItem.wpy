@@ -23,7 +23,7 @@
       </view>
     </view>
   </navigator>
-  <text class="btn" @tap="goTelToast">询底价</text>
+  <text class="btn" @tap="goTelToast({{item}})">询底价</text>
 </view>
 </template>
 
@@ -33,7 +33,11 @@ import wepy from 'wepy'
 import mixin from '../mixins'
 export default class Index extends wepy.component {
   props = {
-    item: {}
+    item: {},
+    itemToastShow: {
+      type: Boolean,
+      twoWay: true
+    }
   }
   data = {
     img: 'http://placehold.it/130x98'
@@ -43,8 +47,8 @@ export default class Index extends wepy.component {
   onLoad() {}
 
   methods = {
-    goTelToast() {
-      this.$emit('itemToastShow', this.item, 'L')
+    goTelToast(item) {
+      this.$emit('itemToastShow', item, 'L')
     }
   }
 }

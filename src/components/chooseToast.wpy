@@ -220,7 +220,7 @@ export default class choose extends wepy.component {
       if (this.newModelId == this.oldModelId) return
       if (newVal) {
         this.typeList = this.type
-        switch (this.submitData.secondCategoryId) {
+        switch (Number(this.submitData.secondCategoryId)) {
           case 116:
           case 55:
           case 58:
@@ -323,6 +323,11 @@ export default class choose extends wepy.component {
       // await this.$emit('delete', 1)
       await this.$emit('getList', n)
     }
+  }
+
+  onLoad() {
+    this.typeList = this.type
+    this.$apply()
   }
   // 获取筛选条件
   getFilterList() {

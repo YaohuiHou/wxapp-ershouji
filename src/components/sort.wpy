@@ -8,7 +8,7 @@
             wx:for="{{sort}}"
             wx:key="{{index}}"
             class="{{ item.select ? 'selected' : '' }}"
-            @tap="sortFun({{item.id}})"
+            @tap="sortFun({{index}})"
           >{{item.name}}</text>
         </view>
       </scroll-view>
@@ -34,7 +34,7 @@ export default class Index extends wepy.component {
   }
   data = {
     sort: [
-      { selectType: 'sortId', name: '默认排序', id: 0, select: false },
+      { selectType: 'sortId', name: '默认排序', id: 0, select: true },
       { selectType: 'sortId', name: '按价格从低到高', id: 3, select: false },
       { selectType: 'sortId', name: '按价格从高到低', id: 4, select: false },
       { selectType: 'sortId', name: '按小时数从低到高', id: 5, select: false },
@@ -61,19 +61,24 @@ export default class Index extends wepy.component {
       this.$apply()
     },
     // 排序选择
-    sortFun(id) {
+    sortFun(index) {
+      // 点击选中
+      if (this.sort[index].select) {
+        return
+      }
+
       wx.showLoading({
         title: '数据加载中...'
       })
       this.sort.forEach((ele, i) => {
         ele.select = false
-        if (ele.id == id) {
+        if (i == index) {
           ele.select = true
         }
       })
       // 选中返回
       this.sortShow = false
-      this.submitData.sortId = id
+      this.submitData.sortId = this.sort[index].id
       this.$apply()
       this.$emit('getList', 1)
     }

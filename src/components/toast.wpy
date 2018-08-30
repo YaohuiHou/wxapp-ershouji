@@ -148,6 +148,11 @@ export default class Index extends wepy.component {
         1106 请输入验证码
         1107 验证码错误，请重新获取验证码
         */
+        let me = this.EQData
+        me.buyer_mobile = this.telPhone
+        this.setSensorsData(this.toastContent.scType, me)
+        return
+
         wepy
           .request({
             url: `${this.host}callCenter`,
@@ -165,7 +170,7 @@ export default class Index extends wepy.component {
                 })
                 let me = this.EQData
                 me.buyer_mobile = this.telPhone
-                // this.setSensorsData('E28', me)
+                this.setSensorsData(this.toastContent.scType, me)
                 break
               case '1104':
               case '1105':
@@ -376,7 +381,7 @@ export default class Index extends wepy.component {
       line-height: 44px;
       text-align: center;
       border: none;
-      transition: background 0.7s linear;
+      transition: opacity 0.4s linear;
       &.disabled {
         opacity: 0.4;
       }

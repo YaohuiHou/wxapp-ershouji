@@ -112,10 +112,24 @@ export default class Index extends wepy.page {
       // 按钮文案
       toastButton: '免费通话',
       // 文案
-      toastContent: '请填写手机号，稍后铁甲管家会与您联系！'
+      toastContent: '请填写手机号，稍后铁甲管家会与您联系！',
+      // 统计
+      scType: 'E28_1'
     },
     // 选中类型
-    newSelect: {},
+    newSelect: {
+      // 泵车
+      typeMode: {
+        categoryId: 12,
+        enName: 'bengche58',
+        englishName: 'bengche',
+        id: 58,
+        name: '泵车',
+        otherName: '混凝土泵车',
+        selectType: 'typeMode',
+        show: null
+      }
+    },
     // 选中固定参数
     startArr: [
       { type: 'eqSourceId', name: '自营', id: 1, select: false },
@@ -169,7 +183,7 @@ export default class Index extends wepy.page {
       hours: '', // ：(使用小时数) 数值
       parking_place: '', // ：(停放地点) 字符串
       price: '', // ：(价格) 数值
-      create_time: '', // ：(发布日期) 字符串
+      // create_time: '', // ：(发布日期) 字符串
       real_name: '', // ：(城市经理姓名) 字符串
       Category: '', // ："设备详情页"
       Label: '', // ："卖家说区域"
@@ -187,8 +201,8 @@ export default class Index extends wepy.page {
       showRecommend: 'N', // 是否推荐 Y 展示 N 不展示
       keyword: '', // 输入的关键词 （不对版赔付）
       eqSourceId: '', // 设备属性id（1自营，2独家，3检测等）
-      categoryId: '', // 机型id
-      secondCategoryId: '', // 二级机型id
+      categoryId: '12', // 机型id
+      secondCategoryId: '58', // 二级机型id
       serialId: '0', // 系列id
       multiSerialId: '', // 多系列id
       brandId: '', // 品牌id
@@ -247,6 +261,22 @@ export default class Index extends wepy.page {
   methods = {
     // 电话弹窗
     telToast(id) {
+      let o = {
+        eq_id: '', // ：(设备id) 字符串
+        category: '', // ：(机型) 字符串
+        brand: '', // ：(品牌) 字符串
+        model: '', // ：( 型号) 字符串
+        out_date: '', // ：(出厂年限) 字符串
+        tonnage: '', // ：(吨位) 数值
+        hours: '', // ：(使用小时数) 数值
+        parking_place: '', // ：(停放地点) 字符串
+        price: '', // ：(价格) 数值
+        create_time: '', // ：(发布日期) 字符串
+        real_name: '', // ：(城市经理姓名) 字符串
+        Category: '', // ："设备详情页"
+        Label: '', // ："卖家说区域"
+        Action: '' // ：(留空)
+      }
       switch (id) {
         case '0':
           // 买设备
@@ -254,6 +284,7 @@ export default class Index extends wepy.page {
           this.toastContent.toastButton = '免费通话'
           this.toastContent.toastContent =
             '请填写手机号，稍后铁甲客服会与您联系！'
+          o.Label = '吸底买设备'
           break
         case '1':
           // 卖设备
@@ -261,20 +292,52 @@ export default class Index extends wepy.page {
           this.toastContent.toastButton = '提交'
           this.toastContent.toastContent =
             '请填写手机号，稍后铁甲管家会与您联系！'
+          o.Label = '吸底卖设备'
           break
       }
       this.toastContent.pageFromType = 'E'
       this.toastShow = false
       this.$apply()
       // 埋点
-      // this.getEQDataFun()
-      // this.setSensorsData('E27_1', this.EQData)
+      if (
+        this.submitData.keyword === '' ||
+        this.submitData.keyword == '不对版赔付'
+      ) {
+        // 筛选
+        o.Category = '筛选列表页'
+      } else {
+        // 搜索
+        o.Category = '搜索列表页'
+      }
+      this.setSensorsData(this.$wxapp, 'E27_1', o)
+      // this.$wxapp.sensors.track('E27_1', {
+      //   Category: '筛选列表页',
+      //   action: '',
+      //   Label: ''
+      // })
+      // this.$wxapp.sensors.track('E27_1', {
+      //   eq_id: o.eq_id, // ：(设备id) 字符串
+      //   category: o.category, // ：(机型) 字符串
+      //   brand: o.brand, // ：(品牌) 字符串
+      //   model: o.model, // ：( 型号) 字符串
+      //   out_date: o.out_date, // ：(出厂年限) 字符串
+      //   tonnage: o.tonnage, // ：(吨位) 数值
+      //   hours: o.hours, // ：(使用小时数) 数值
+      //   parking_place: o.parking_place, // ：(停放地点) 字符串
+      //   price: o.price, // ：(价格) 数值
+      //   create_time: o.create_time, // ：(发布日期) 字符串
+      //   real_name: o.real_name, // ：(城市经理姓名) 字符串
+      //   Category: o.Category, // ："设备详情页"
+      //   Label: o.Label, // ："卖家说区域"
+      //   Action: o.Action // ：(留空)
+      // })
     },
     // 列表加载
     homeList() {
       if (this.homeDataDisable) return
       this.homeDataDisable = true
       this.submitData.pageIndex += 1
+      this.$apply()
       this.getPageHomeList()
     }
   }
@@ -337,8 +400,20 @@ export default class Index extends wepy.page {
       this.toastContent.toastContent = '请填写手机号，稍后铁甲客服会与您联系！'
       this.toastShow = false
       this.toastContent.pageFromType = type
+
+      this.EQData.Label = ''
       this.$apply()
-      this.setSensorsData('E27_1', this.EQData)
+      if (
+        this.submitData.keyword === '' ||
+        this.submitData.keyword == '不对版赔付'
+      ) {
+        // 筛选
+        this.EQData.Category = '筛选列表页'
+      } else {
+        // 搜索
+        this.EQData.Category = '搜索列表页'
+      }
+      this.setSensorsData(this.$wxapp, 'E27_1', this.EQData)
     }
   }
 
@@ -351,16 +426,19 @@ export default class Index extends wepy.page {
     let model = obj.eqTitle.match(/[a-zA-Z0-9]+\s*(.+?)\s*[a-zA-Z0-9]+/)[0]
     // 生成品牌机型的数组 [brand,category]
     let BCArr = obj.eqTitle.split(model)
-    this.EQData.eq_id = obj.eqId
-    this.EQData.category = BCArr[1]
-    this.EQData.brand = BCArr[0]
-    this.EQData.model = model
-    this.EQData.out_date = obj.eqTimeInfo.split('|')[0].match(/[0-9]+/)[0]
-    this.EQData.tonnage = ''
-    this.EQData.hours = obj.eqTimeInfo.split('|')[1].match(/[0-9]+/)[0]
-    this.EQData.parking_place = obj.areaInfo
-    this.EQData.price = obj.priceInfo
-    this.EQData.create_time = obj.updateTimeInfo
+
+    this.EQData.eq_id = String(obj.eqId)
+    this.EQData.category = String(BCArr[1])
+    this.EQData.brand = String(BCArr[0])
+    this.EQData.model = String(model)
+    this.EQData.out_date = String(
+      obj.eqTimeInfo.split('|')[0].match(/[0-9]+/)[0]
+    )
+    this.EQData.tonnage = 0
+    this.EQData.hours = Number(obj.eqTimeInfo.split('|')[1].match(/[0-9]+/)[0])
+    this.EQData.parking_place = String(obj.areaInfo)
+    this.EQData.price = Number(obj.priceInfo)
+    // this.EQData.create_time = String(obj.updateTimeInfo)
     this.EQData.real_name = ''
     switch (this.submitData.keyword) {
       case '':
@@ -429,10 +507,9 @@ export default class Index extends wepy.page {
     wx.removeStorage({
       key: 'cityObj'
     })
-    // wx.getStorage({
-    //   key: 'brandsArr'
-    // })
-    setTimeout(() => {
+
+    let timer = setTimeout(() => {
+      clearTimeout(timer)
       wx.hideLoading()
       this.hintText = false
       this.$apply()
@@ -443,6 +520,8 @@ export default class Index extends wepy.page {
     wx.getStorage({
       key: 'screenVal',
       complete: res => {
+        console.log(res)
+
         if (res.data) {
           let data = JSON.stringify(this.copySubmitData)
           this.submitData = JSON.parse(data)
@@ -468,23 +547,16 @@ export default class Index extends wepy.page {
             key: 'cityObj',
             data: JSON.stringify(this.address)
           })
-          this.deleteSelectedItem('deleteAll')
           this.$apply()
+          this.$nextTick(() => {
+            this.deleteSelectedItem('deleteAll')
+          })
         } else {
           // 获取缓存定位地址
           this.getPostionInfo()
         }
       }
     })
-
-    // 详情页缓存
-    wepy.removeStorage({ key: 'CarsListGoodOrBrand' })
-  }
-
-  // 卸载之后清除数据
-  onUnload() {
-    // 清除数据
-    // wx.removeStorage({ key: 'cityObj' })
   }
 
   // 数据请求
@@ -505,7 +577,6 @@ export default class Index extends wepy.page {
   // 首页列表
   getPageHomeList() {
     console.log(this.submitData, '更新')
-
     wepy
       .request({
         url: `${this.host}wx/getEqAndSearchList`,
@@ -536,8 +607,6 @@ export default class Index extends wepy.page {
 
   // 选中项数据删除
   deleteSelectedItem(type) {
-    console.log(type)
-
     switch (type) {
       case 'deleteAll':
         this.$invoke(`./typeMode`, 'changeItemSelectFun')

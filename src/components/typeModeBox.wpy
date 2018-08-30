@@ -65,6 +65,11 @@ export default class typeMode extends wepy.component {
       wx.showLoading({
         title: '数据加载中...'
       })
+      console.log(
+        this.typeModeList,
+        this.typeModeList[item.categoryId].childrens
+      )
+
       this.typeModeList[item.categoryId].childrens.forEach(ele => {
         if (ele.id === item.id) {
           ele.select = true
@@ -86,6 +91,8 @@ export default class typeMode extends wepy.component {
       this.submitData.categoryId = item.categoryId
       this.submitData.secondCategoryId = item.id
       this.typeModeData = item
+      console.log(this.startSelectItem)
+
       this.$apply()
       this.$emit('delete', null)
     }

@@ -197,6 +197,7 @@ export default class brandId extends wepy.component {
                 this.navArr = Object.keys(this.brandList).sort()
                 this.navArr.unshift('热')
                 this.$apply()
+                console.log(this.brandList)
               }
             })
           } else {

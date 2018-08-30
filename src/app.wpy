@@ -22,7 +22,7 @@
 <script>
 // require('./utils/sensorsdata.js')
 const ALD = require('./utils/ald-stat.js')
-const SA = require('./utils/sensorsdata.js')
+import sensors from './utils/sensorsdata.js'
 import wepy from 'wepy'
 import 'wepy-async-function'
 
@@ -41,19 +41,13 @@ export default class extends wepy.app {
       navigationBarBackgroundColor: '#fff',
       navigationBarTitleText: '铁甲二手机',
       navigationBarTextStyle: 'black'
-    },
-    widgets: [
-      {
-        type: 'search',
-        path: 'pages/index'
-      }
-    ]
+    }
   }
 
   globalData = {
     userInfo: null
   }
-
+  sensors = sensors
   constructor() {
     super()
     this.use('requestfix')
@@ -62,14 +56,13 @@ export default class extends wepy.app {
   onLaunch(option) {
     this.sceneFun(option)
     this.testAsync()
-  }
-  onShow() {
     // 公共属性
-    // SA.register({
-    //   app_name: '二手机小程序',
-    //   app_version: '2.0'
-    // })
+    this.sensors.register({
+      app_name: '二手机小程序',
+      app_version: '2.0'
+    })
   }
+  onShow() {}
 
   // 场景值
   sceneFun(option) {

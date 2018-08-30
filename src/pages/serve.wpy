@@ -23,7 +23,7 @@
           <view class="icon"></view>
           <view class="some">
             <text class="h5">拨打"铁甲保"申诉热线</text>
-            <view>如出现货不对版，您只需拨打<text class="tel" @tap="callPhone">{{callTel}}</text>申诉热线，陈述情况并提供您的交易信息，铁甲会立即专人受理该业务。</view>
+            <view>如出现货不对版，您只需拨打<text class="tel" @tap="callPhone">{{globleCallTel}}</text>申诉热线，陈述情况并提供您的交易信息，铁甲会立即专人受理该业务。</view>
           </view>
         </view>
         <view class="item">
@@ -41,7 +41,7 @@
           </view>
         </view>
       </view>
-      <view class="footer">想了解更多请咨询 <text class="tel" @tap="callPhone">{{callTel}}</text></view>
+      <view class="footer">想了解更多请咨询 <text class="tel" @tap="callPhone">{{globleCallTel}}</text></view>
     </view>
   </view>
 </template>
@@ -58,15 +58,13 @@ export default class Index extends wepy.page {
 
   mixins = [mixins]
 
-  data = {
-    callTel: '4006886288'
-  }
+  data = {}
 
   methods = {
     // 拨打电话
     callPhone() {
       wx.makePhoneCall({
-        phoneNumber: this.callTel
+        phoneNumber: this.globleCallTel
       })
     }
   }

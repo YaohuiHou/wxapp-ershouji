@@ -49,7 +49,7 @@
         </navigator>
       </view>
       <!-- 铁甲保 -->
-      <view class="tiejia" wx:if="{{ detailHeader.equipment.tjInsurance  == 2 && detailHeader.equipment.managerRecommend == 1}}">
+      <view class="tiejia" wx:if="{{ detailHeader.equipment.tjInsurance == 2 || detailHeader.equipment.managerRecommend == 1 }}">
         <view class="gradient" wx:if="{{ detailHeader.equipment.tjInsurance  == 2 }}">
           <view class="ensure">
             <view class="h3">
@@ -230,7 +230,9 @@ export default class Index extends wepy.page {
       // 按钮文案
       toastButton: '免费通话',
       // 文案
-      toastContent: '请填写手机号，稍后铁甲管家会与您联系！'
+      toastContent: '请填写手机号，稍后铁甲管家会与您联系！',
+      // 统计
+      scType: 'E28'
     },
     // 参数
     eqId: '',
@@ -294,7 +296,7 @@ export default class Index extends wepy.page {
       hours: '', // ：(使用小时数) 数值
       parking_place: '', // ：(停放地点) 字符串
       price: '', // ：(价格) 数值
-      create_time: '', // ：(发布日期) 字符串
+      // create_time: '', // ：(发布日期) 字符串
       real_name: '', // ：(城市经理姓名) 字符串
       Category: '设备详情页', // ："设备详情页"
       Label: '', // ："卖家说区域"
@@ -339,22 +341,22 @@ export default class Index extends wepy.page {
         case 1:
           // 设备信息概述区域
           this.EQData.Label = '设备信息概述区域'
-          this.setSensorsData('E27', this.EQData)
+          this.setSensorsData(this.$wxapp, 'E27', this.EQData)
           break
         case 2:
           // 管家信息区域
           this.EQData.Label = '管家信息区域'
-          this.setSensorsData('E27', this.EQData)
+          this.setSensorsData(this.$wxapp, 'E27', this.EQData)
           break
         case 3:
           // 卖家说区域
           this.EQData.Label = '卖家说区域'
-          this.setSensorsData('E27', this.EQData)
+          this.setSensorsData(this.$wxapp, 'E27', this.EQData)
           break
         case 4:
           // 吸底区域
           this.EQData.Label = '吸底区域'
-          this.setSensorsData('E27', this.EQData)
+          this.setSensorsData(this.$wxapp, 'E27', this.EQData)
           break
       }
       this.$apply()
@@ -370,20 +372,42 @@ export default class Index extends wepy.page {
 
   // 统计
   getEQDataFun() {
-    this.EQData.eq_id = this.eqId
-    this.EQData.category = this.detailHeader.manager.category
-    this.EQData.brand = this.detailHeader.manager.brand
-    this.EQData.model = this.detailHeader.manager.model
-    this.EQData.out_date = this.detailHeader.equipment.outDate
-    this.EQData.tonnage = this.detailHeader.equipment.tonnage
-    this.EQData.hours = this.detailHeader.equipment.hours
-    this.EQData.parking_place =
+    this.EQData.eq_id = String(this.eqId)
+    this.EQData.category = String(this.detailHeader.equipment.category)
+    this.EQData.brand = String(this.detailHeader.equipment.brand)
+    this.EQData.model = String(this.detailHeader.equipment.model)
+    this.EQData.out_date = String(this.detailHeader.equipment.outDate)
+    this.EQData.tonnage = 0
+    // this.EQData.tonnage = Number(
+    //   this.detailHeader.equipment.tonnage
+    //     ? this.detailHeader.equipment.tonnage
+    //     : 0
+    // )
+    this.EQData.hours = Number(this.detailHeader.equipment.hours)
+    this.EQData.parking_place = String(
       this.detailHeader.equipment.province +
-      '-' +
-      this.detailHeader.equipment.city
-    this.EQData.price = this.detailHeader.equipment.price
-    this.EQData.create_time = this.detailHeader.manager.createTimeStr
-    this.EQData.real_name = this.detailHeader.manager.realname
+        '-' +
+        this.detailHeader.equipment.city
+    )
+    this.EQData.price = Number(this.detailHeader.equipment.price)
+    // this.EQData.create_time = this.detailHeader.equipment.createTimeStr
+    this.EQData.real_name = String(this.detailHeader.manager.realname)
+  }
+
+  // 单个列表统计
+  getItemEQDataFun(obj) {
+    this.EQData.eq_id = String(obj.id)
+    this.EQData.category = String(obj.categoryName)
+    this.EQData.brand = String(obj.brandName)
+    this.EQData.model = String(obj.modelName)
+    this.EQData.out_date = String(obj.outDate)
+    this.EQData.tonnage = Number(obj.tonnage ? obj.tonnage : 0)
+    this.EQData.hours = Number(obj.hours)
+    this.EQData.parking_place = String(obj.provinceName + '-' + obj.cityName)
+    this.EQData.price = Number(obj.price)
+    this.EQData.create_time = obj.updateTimeStr
+    this.EQData.real_name = ''
+    this.EQData.Label = '设备列表区域'
   }
 
   onShareAppMessage(res) {
@@ -402,16 +426,18 @@ export default class Index extends wepy.page {
 
   events = {
     // 电话
-    itemToastShow: res => {
-      if (res == 1) {
-        // 买设备
-        this.toastContent.toastHeader = '我要买设备'
-        this.toastContent.toastButton = '免费通话'
-        this.toastContent.toastContent =
-          '请填写手机号，稍后铁甲客服会与您联系！'
-        this.toastShow = false
-        this.$apply()
-      }
+    itemToastShow: (obj, type) => {
+      // 咨询设备
+      console.log(obj, type, '电话')
+
+      this.getItemEQDataFun(obj)
+      this.toastContent.toastHeader = '我要买设备'
+      this.toastContent.toastButton = '免费通话'
+      this.toastContent.toastContent = '请填写手机号，稍后铁甲客服会与您联系！'
+      this.toastShow = false
+      this.toastContent.pageFromType = type
+      this.$apply()
+      this.setSensorsData(this.$wxapp, 'E27_1', this.EQData)
     }
   }
 
@@ -425,7 +451,7 @@ export default class Index extends wepy.page {
     }
     this.eqId = option.eqId
     this.$apply()
-    this.detailHeaderFun()
+    await this.detailHeaderFun()
     this.detailManInfoFun()
     this.detailHomeManInfoFun()
     this.getGoodCarList()
@@ -481,6 +507,7 @@ export default class Index extends wepy.page {
           '万' +
           carAllInfo
         this.$apply()
+        console.log(this.detailHeader.equipment.tjInsurance)
       })
   }
 
@@ -729,20 +756,24 @@ export default class Index extends wepy.page {
         }
         text {
           height: 80rpx;
-          width: 100%;
+          width: calc(~'100% - 20rpx');
+          margin-left: 20rpx;
           background-color: #fb7430;
           padding-left: 124rpx;
           box-sizing: border-box;
-          font-size: 24rpx;
+          font-size: 28rpx;
+          font-weight: bold;
           color: #ffffff;
           display: flex;
           align-items: center;
           justify-content: center;
           box-shadow: 0 10px 12px 0 rgba(251, 140, 82, 0.33);
+          border-radius: 4rpx;
+          line-height: 80rpx;
           &:after {
             content: '';
             display: block;
-            margin-left: 14rpx;
+            margin-left: 24rpx;
             width: 10rpx;
             height: 10rpx;
             border-top: 1rpx solid #fff;
